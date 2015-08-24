@@ -176,7 +176,7 @@ Transactions.prototype.onMessage = function (query) {
 			var executor = modules.blockchain.accounts.getExecutor();
 
 			modules.api.transactions.getTransaction(query.message.transactionId, function (err, data) {
-				if (!err && data.transaction && data.transaction.senderPublicKey == executor.keypair.publicKey) {
+				if (!err && data.transaction && data.transaction.senderPublicKey === executor.keypair.publicKey) {
 					modules.blockchain.accounts.setAccountAndGet({publicKey: executor.keypair.publicKey}, function (err, account) {
 						var transaction = modules.logic.transaction.create({
 							type: 1,

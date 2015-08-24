@@ -48,7 +48,7 @@ private.getState = function (executor, height) {
 
 		var delegate_id = delegates[delegate_pos];
 
-		if (delegate_id && executor.address == delegate_id) {
+		if (delegate_id && executor.address === delegate_id) {
 			return executor;
 		}
 	}
@@ -92,7 +92,7 @@ Round.prototype.onBlockchainLoaded = function () {
 }
 
 Round.prototype.onMessage = function (query) {
-	if (query.topic == "point" && private.loaded) {
+	if (query.topic === "point" && private.loaded) {
 		var blockId = query.message;
 		private.loop(blockId, function (err) {
 			console.log("loop", err)

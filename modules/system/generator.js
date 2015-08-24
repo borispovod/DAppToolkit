@@ -16,7 +16,7 @@ Generator.prototype.onBind = function (_modules) {
 		}
 
 		var executor = modules.blockchain.accounts.getExecutor();
-		if (res.authorId == executor.address) {
+		if (res.authorId === executor.address) {
 
 		}
 		var q = {

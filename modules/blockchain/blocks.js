@@ -111,7 +111,7 @@ private.saveBlock = function (block, cb) {
 }
 
 private.verify = function (block, cb) {
-	if (private.lastBlock.pointId == private.genesisBlock.pointId) {
+	if (private.lastBlock.pointId === private.genesisBlock.pointId) {
 		var valid;
 
 		try {
@@ -129,7 +129,7 @@ private.verify = function (block, cb) {
 			cb(err);
 		}
 		var cryptiBlock = data.block;
-		if (cryptiBlock.previousBlock == private.lastBlock.pointId && cryptiBlock.height == private.lastBlock.pointHeight + 1) { // new correct block
+		if (cryptiBlock.previousBlock === private.lastBlock.pointId && cryptiBlock.height === private.lastBlock.pointHeight + 1) { // new correct block
 			modules.api.sql.select({
 				table: "blocks",
 				condition: {
@@ -303,7 +303,7 @@ Blocks.prototype.getBlocks = function (cb, query) {
 }
 
 Blocks.prototype.onMessage = function (query) {
-	if (query.topic == "block" && private.loaded) {
+	if (query.topic === "block" && private.loaded) {
 		var block = query.message;
 		self.processBlock(block, function (err) {
 			if (err) {

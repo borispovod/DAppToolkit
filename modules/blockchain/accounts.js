@@ -20,7 +20,7 @@ function Accounts(cb, _library) {
 function reverseDiff(diff) {
 	var copyDiff = diff.slice();
 	for (var i = 0; i < copyDiff.length; i++) {
-		var math = copyDiff[i][0] == '-' ? '+' : '-';
+		var math = copyDiff[i][0] === '-' ? '+' : '-';
 		copyDiff[i] = math + copyDiff[i].slice(1);
 	}
 	return copyDiff;
@@ -34,7 +34,7 @@ function applyDiff(source, diff) {
 		var val = diff[i].slice(1);
 		var index = -1;
 
-		if (math == "+") {
+		if (math === "+") {
 			res = res || [];
 
 			if (res) {
@@ -46,11 +46,11 @@ function applyDiff(source, diff) {
 
 			res.push(val);
 		}
-		if (math == "-") {
+		if (math === "-") {
 			if (res) {
 				index = res.indexOf(val);
 			}
-			if (index == -1) {
+			if (index === -1) {
 				return false;
 			}
 			res.splice(index, 1);
@@ -166,7 +166,7 @@ Accounts.prototype.mergeAccountAndGet = function (data, cb) {
 
 	Object.keys(data).forEach(function (key) {
 		var trueValue = data[key];
-		if (typeof trueValue == "number") {
+		if (typeof trueValue === "number") {
 			account[key] = account[key] + trueValue;
 		} else if (util.isArray(trueValue)) {
 			account[key] = applyDiff(account[key], trueValue);
@@ -193,7 +193,7 @@ Accounts.prototype.undoMerging = function (data, cb) {
 
 	Object.keys(data).forEach(function (key) {
 		var trueValue = data[key];
-		if (typeof trueValue == "number") {
+		if (typeof trueValue === "number") {
 			account[key] = account[key] - trueValue;
 		} else if (util.isArray(trueValue)) {
 			trueValue = reverseDiff(trueValue);

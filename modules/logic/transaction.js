@@ -48,11 +48,11 @@ Transaction.prototype.create = function (data) {
 }
 
 Transaction.prototype.attachAssetType = function (typeId, instance) {
-	if (instance && typeof instance.create == 'function' && typeof instance.getBytes == 'function' &&
-		typeof instance.calculateFee == 'function' && typeof instance.verify == 'function' &&
-		typeof instance.apply == 'function' && typeof instance.undo == 'function' &&
-		typeof instance.applyUnconfirmed == 'function' && typeof instance.undoUnconfirmed == 'function' &&
-		typeof instance.save == 'function' && typeof instance.dbRead == 'function'
+	if (instance && typeof instance.create === 'function' && typeof instance.getBytes === 'function' &&
+		typeof instance.calculateFee === 'function' && typeof instance.verify === 'function' &&
+		typeof instance.apply === 'function' && typeof instance.undo === 'function' &&
+		typeof instance.applyUnconfirmed === 'function' && typeof instance.undoUnconfirmed === 'function' &&
+		typeof instance.save === 'function' && typeof instance.dbRead === 'function'
 	) {
 		private.types[typeId] = instance;
 	} else {

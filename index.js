@@ -66,7 +66,7 @@ d.run(function () {
 						Object.keys(modules).forEach(function (namespace) {
 							Object.keys(modules[namespace]).forEach(function (moduleName) {
 								var eventName = 'on' + changeCase.pascalCase(topic);
-								if (typeof(modules[namespace][moduleName][eventName]) == 'function') {
+								if (typeof(modules[namespace][moduleName][eventName]) === 'function') {
 									modules[namespace][moduleName][eventName].apply(modules[namespace][moduleName][eventName], args);
 								}
 							});
@@ -91,7 +91,7 @@ d.run(function () {
 			cb(null, {
 				add: function (worker, done) {
 					sequence.push(function (cb) {
-						if (worker && typeof(worker) == 'function') {
+						if (worker && typeof(worker) === 'function') {
 							worker(function (err, res) {
 								setImmediate(cb);
 								if (done) setImmediate(done, err, res);
