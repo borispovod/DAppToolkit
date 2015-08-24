@@ -156,6 +156,8 @@ Transaction.prototype.verifySignature = function (trs, publicKey, signature) {
 }
 
 Transaction.prototype.verify = function (trs, sender, cb) { //inheritance
+	var valid;
+
 	if (!private.types[trs.type]) {
 		return setImmediate(cb, 'Unknown transaction type ' + trs.type);
 	}
@@ -167,7 +169,7 @@ Transaction.prototype.verify = function (trs, sender, cb) { //inheritance
 
 	//verify signature
 	try {
-		var valid = self.verifySignature(trs, trs.senderPublicKey, trs.signature);
+		valid = self.verifySignature(trs, trs.senderPublicKey, trs.signature);
 	} catch (e) {
 		return setImmediate(cb, e.toString());
 	}
