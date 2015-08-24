@@ -9,6 +9,7 @@
 		"bignum": true,
 		"$Boolean": true,
 		"ByteBuffer": true,
-		"$Date": true
+		"$Date": true,
+		"errorCode": true
 	}
 }
