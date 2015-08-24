@@ -39,7 +39,7 @@ Transaction.prototype.create = function (data) {
 	var trsBytes = self.getBytes(trs);
 	trs.signature = modules.api.crypto.sign(data.keypair, trsBytes);
 
-	var trsBytes = self.getBytes(trs);
+	trsBytes = self.getBytes(trs);
 	trs.id = modules.api.crypto.getId(trsBytes);
 
 	trs.fee = private.types[trs.type].calculateFee.call(self, trs) || false;
