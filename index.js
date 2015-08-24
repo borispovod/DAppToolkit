@@ -94,11 +94,11 @@ d.run(function () {
 						if (worker && typeof(worker) == 'function') {
 							worker(function (err, res) {
 								setImmediate(cb);
-								done && setImmediate(done, err, res);
+								if (done) setImmediate(done, err, res);
 							});
 						} else {
 							setImmediate(cb);
-							done && setImmediate(done);
+							if (done) setImmediate(done);
 						}
 					});
 				}
