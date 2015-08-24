@@ -52,7 +52,7 @@ Block.prototype.getBytes = function (block, withSignature) {
 
 Block.prototype.verifySignature = function (block) {
 	var blockBytes = self.getBytes(block);
-	if (block.id != modules.api.crypto.getId(blockBytes)) {
+	if (block.id !==  modules.api.crypto.getId(blockBytes)) {
 		return false;
 	}
 	if (!modules.api.crypto.verify(block.delegate, block.signature, blockBytes)) {

@@ -40,7 +40,7 @@ function applyDiff(source, diff) {
 			if (res) {
 				index = res.indexOf(val);
 			}
-			if (index != -1) {
+			if (index !== -1) {
 				return false;
 			}
 

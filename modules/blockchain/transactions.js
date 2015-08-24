@@ -69,7 +69,7 @@ private.processUnconfirmedTransaction = function (transaction, cb) {
 		});
 	}
 
-	if (private.unconfirmedTransactionsIdIndex[transaction.id] !== undefined || private.doubleSpendingTransactions[transaction.id]) {
+	if (private.unconfirmedTransactionsIdIndex[transaction.id] !==  undefined || private.doubleSpendingTransactions[transaction.id]) {
 		return done("This transaction already exists");
 	}
 
@@ -156,7 +156,7 @@ private.addDoubleSpending = function (transaction, cb) {
 Transactions.prototype.getUnconfirmedTransactionList = function (reverse, cb) {
 	var a = [];
 	for (var i = 0; i < private.unconfirmedTransactions.length; i++) {
-		if (private.unconfirmedTransactions[i] !== false) {
+		if (private.unconfirmedTransactions[i] !==  false) {
 			a.push(private.unconfirmedTransactions[i]);
 		}
 	}

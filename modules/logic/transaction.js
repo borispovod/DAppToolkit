@@ -127,14 +127,14 @@ Transaction.prototype.process = function (trs, sender, cb) {
 	} catch (e) {
 		return setImmediate(cb, "Invalid transaction id");
 	}
-	if (trs.id && trs.id != txId) {
+	if (trs.id && trs.id !==  txId) {
 		return setImmediate(cb, "Invalid transaction id");
 	} else {
 		trs.id = txId;
 	}
 
 	modules.api.transactions.getTransaction(trs.id, function (err, data) {
-		if (err != "Transaction not found") {
+		if (err !== "Transaction not found") {
 			return cb("Can't process transaction, transaction already confirmed");
 		}
 
@@ -184,13 +184,13 @@ Transaction.prototype.verify = function (trs, sender, cb) { //inheritance
 	}
 
 	//check sender
-	if (trs.senderId != sender.address) {
+	if (trs.senderId !==  sender.address) {
 		return setImmediate(cb, "Invalid sender id: " + trs.id);
 	}
 
 	//calc fee
 	var fee = private.types[trs.type].calculateFee.call(self, trs) || false;
-	if (!fee || trs.fee != fee) {
+	if (!fee || trs.fee !==  fee) {
 		return setImmediate(cb, "Invalid transaction type/fee: " + trs.id);
 	}
 	//check amount
