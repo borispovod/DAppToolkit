@@ -36,8 +36,10 @@ OutsideTransfer.prototype.verify = function (trs, sender, cb) {
 }
 
 OutsideTransfer.prototype.getBytes = function (trs) {
+	var buf;
+
 	try {
-		var buf = new Buffer(trs.asset.outsidetransfer.src_id, 'utf8');
+		buf = new Buffer(trs.asset.outsidetransfer.src_id, 'utf8');
 	} catch (e) {
 		throw Error(e.toString());
 	}
