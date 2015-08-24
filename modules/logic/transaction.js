@@ -61,6 +61,8 @@ Transaction.prototype.attachAssetType = function (typeId, instance) {
 }
 
 Transaction.prototype.getBytes = function (trs, skipSignature) {
+	var bb;
+
 	if (!private.types[trs.type]) {
 		throw Error('Unknown transaction type ' + trs.type);
 	}
@@ -69,7 +71,7 @@ Transaction.prototype.getBytes = function (trs, skipSignature) {
 		var assetBytes = private.types[trs.type].getBytes.call(self, trs, skipSignature);
 		var assetSize = assetBytes ? assetBytes.length : 0;
 
-		var bb = new ByteBuffer(1 + 32 + 8 + 8 + 64 + 64 + assetSize, true);
+		bb = new ByteBuffer(1 + 32 + 8 + 8 + 64 + 64 + assetSize, true);
 		bb.writeByte(trs.type);
 
 		var senderPublicKeyBuffer = new Buffer(trs.senderPublicKey, 'hex');
