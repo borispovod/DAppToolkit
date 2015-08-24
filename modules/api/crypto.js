@@ -1,3 +1,4 @@
+var ed2curve = require('ed2curve');
 var nacl_factory = require('js-nacl');
 var crypto = require('crypto-browserify');
 var bignum = require('browserify-bignum');
@@ -23,11 +24,11 @@ private.convertPrivateKey = function (privateKey) {
 }
 
 private.encrypt = function (message, nonce, senderPrivateKey, recipientPublicKey) {
-	return nacl.crypto_box(message, nonce, convertPublicKey(recipientPublicKey), convertPrivateKey(senderPrivateKey));
+	return nacl.crypto_box(message, nonce, private.convertPublicKey(recipientPublicKey), private.convertPrivateKey(senderPrivateKey));
 }
 
 private.decrypt = function (message, nonce, senderPublicKey, recipientPrivateKey) {
-	return nacl.crypto_box_open(message, nonce, convertPublicKey(senderPublicKey), convertPrivateKey(recipientPrivateKey));
+	return nacl.crypto_box_open(message, nonce, private.convertPublicKey(senderPublicKey), private.convertPrivateKey(recipientPrivateKey));
 }
 
 private.getNonce = function () {
@@ -35,11 +36,11 @@ private.getNonce = function () {
 }
 
 private.cryptobox = function (text, nonce, key) {
-	return nacl.crypto_secretbox(nacl.encode_utf8(text), nonce, convertPrivateKey(key));
+	return nacl.crypto_secretbox(nacl.encode_utf8(text), nonce, private.convertPrivateKey(key));
 }
 
 private.decrypt_cryptobox = function (text, nonce, key) {
-	return nacl.crypto_secretbox_open(text, nonce, convertPrivateKey(key));
+	return nacl.crypto_secretbox_open(text, nonce, private.convertPrivateKey(key));
 }
 
 Crypto.prototype.encrypt = function (keypair, text, cb) {

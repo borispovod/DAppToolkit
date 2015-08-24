@@ -33,5 +33,15 @@
 		"path": "/blocks/count",
 		"method": "get",
 		"handler": "blockchain.blocks.count"
-	}
+	},
+    {
+      "path": "/note/encrypt",
+      "method": "post",
+      "handler": "assets.note.encrypt"
+    },
+    {
+      "path": "/note/decrypt",
+      "method": "post",
+      "handler": "assets.note.decrypt"
+    }
 ]

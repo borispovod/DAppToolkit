@@ -10,10 +10,11 @@
   "license": "ISC",
   "dependencies": {
     "async": "*",
+    "browserify-bignum": "*",
     "bytebuffer": "^4.0.0",
     "change-case": "*",
-    "js-nacl": "^0.6.0",
     "crypto-browserify": "*",
-    "browserify-bignum": "*"
+    "ed2curve": "^0.1.3",
+    "js-nacl": "^0.6.0"
   }
 }
