@@ -32,11 +32,11 @@ function applyDiff(source, diff) {
 	for (var i = 0; i < diff.length; i++) {
 		var math = diff[i][0];
 		var val = diff[i].slice(1);
+		var index = -1;
 
 		if (math == "+") {
 			res = res || [];
 
-			var index = -1;
 			if (res) {
 				index = res.indexOf(val);
 			}
@@ -47,7 +47,6 @@ function applyDiff(source, diff) {
 			res.push(val);
 		}
 		if (math == "-") {
-			var index = -1;
 			if (res) {
 				index = res.indexOf(val);
 			}
