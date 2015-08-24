@@ -74,7 +74,7 @@ d.run(function () {
 					}
 				}
 			}
-			cb(null, new bus)
+			cb(null, new bus())
 		},
 
 		sequence: function (cb) {
