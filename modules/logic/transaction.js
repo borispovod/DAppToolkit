@@ -139,6 +139,8 @@ Transaction.prototype.process = function (trs, sender, cb) {
 }
 
 Transaction.prototype.verifySignature = function (trs, publicKey, signature) {
+	var res;
+
 	if (!private.types[trs.type]) {
 		throw Error('Unknown transaction type ' + trs.type);
 	}
@@ -147,7 +149,7 @@ Transaction.prototype.verifySignature = function (trs, publicKey, signature) {
 
 	try {
 		var bytes = self.getBytes(trs, true);
-		var res = modules.api.crypto.verify(publicKey, signature, bytes);
+		res = modules.api.crypto.verify(publicKey, signature, bytes);
 	} catch (e) {
 		throw Error(e.toString());
 	}
