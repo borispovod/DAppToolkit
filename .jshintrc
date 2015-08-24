@@ -1,0 +1,14 @@
+{
+	"eqnull": true,
+	"eqeqeq": false,
+	"undef": true,
+	"node": true,
+	"strict": false,
+	"asi": true,
+	"globals": {
+		"bignum": true,
+		"$Boolean": true,
+		"ByteBuffer": true,
+		"$Date": true
+	}
+}
