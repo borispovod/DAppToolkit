@@ -30,7 +30,7 @@ Sync.prototype.onBlockchainLoaded = function () {
 				private.loadBalances(lastBlockHeight, cb);
 			});
 		}, function (err) {
-			if (err) library.logger('loadBalances timer', err);
+			if (err) library.logger("loadBalances timer", err);
 
 			setTimeout(nextLoadBalances, 10 * 1000)
 		})

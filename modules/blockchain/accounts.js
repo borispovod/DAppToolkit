@@ -1,7 +1,7 @@
-var extend = require('extend');
-var util = require('util');
-var crypto = require('crypto-browserify');
-var bignum = require('browserify-bignum');
+var extend = require("extend");
+var util = require("util");
+var crypto = require("crypto-browserify");
+var bignum = require("browserify-bignum");
 
 var private = {}, self = null,
 	library = null, modules = null;
@@ -20,7 +20,7 @@ function Accounts(cb, _library) {
 function reverseDiff(diff) {
 	var copyDiff = diff.slice();
 	for (var i = 0; i < copyDiff.length; i++) {
-		var math = copyDiff[i][0] === '-' ? '+' : '-';
+		var math = copyDiff[i][0] === "-" ? "+" : "-";
 		copyDiff[i] = math + copyDiff[i].slice(1);
 	}
 	return copyDiff;
@@ -99,7 +99,7 @@ Accounts.prototype.getExecutor = function () {
 }
 
 Accounts.prototype.generateAddressByPublicKey = function (publicKey) {
-	var publicKeyHash = crypto.createHash('sha256').update(publicKey, 'hex').digest();
+	var publicKeyHash = crypto.createHash("sha256").update(publicKey, "hex").digest();
 	var temp = new Buffer(8);
 	for (var i = 0; i < 8; i++) {
 		temp[i] = publicKeyHash[7 - i];

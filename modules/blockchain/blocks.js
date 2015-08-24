@@ -1,7 +1,7 @@
-var crypto = require('crypto-browserify');
-var path = require('path');
-var async = require('async');
-var util = require('util');
+var crypto = require("crypto-browserify");
+var path = require("path");
+var async = require("async");
+var util = require("util");
 
 var private = {}, self = null,
 	library = null, modules = null;
@@ -40,7 +40,7 @@ private.row2parsed = function (row) {
 			 i = 0; i < length; i++
 	) {
 		if (parsers[i] === Buffer) {
-			out[fields[i]] = parsers[i](row[i], 'hex');
+			out[fields[i]] = parsers[i](row[i], "hex");
 		} else if (parsers[i] === Array) {
 			out[fields[i]] = row[i] ? row[i].split(",") : []
 		} else {
@@ -258,7 +258,7 @@ Blocks.prototype.count = function (cb) {
 	modules.api.sql.select({
 		table: "blocks",
 		fields: [{
-			expression: 'count(*)'
+			expression: "count(*)"
 		}]
 	}, function (err, rows) {
 		var count = !err && Number(rows[0][0]);
@@ -286,13 +286,13 @@ Blocks.prototype.getBlocks = function (cb, query) {
 		table: "blocks",
 		alias: "b",
 		join: [{
-			type: 'left outer',
-			table: 'transactions',
+			type: "left outer",
+			table: "transactions",
 			alias: "t",
 			on: {"b.id": "t.blockId"}
 		}, {
-			type: 'left outer',
-			table: 'asset_dapptransfer',
+			type: "left outer",
+			table: "asset_dapptransfer",
 			alias: "t_dt",
 			on: {"t.id": "t_dt.transactionId"}
 		}],

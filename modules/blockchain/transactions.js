@@ -1,4 +1,4 @@
-var async = require('async');
+var async = require("async");
 
 var private = {}, self = null,
 	library = null, modules = null;
@@ -95,7 +95,7 @@ private.applyUnconfirmedTransaction = function (transaction, cb) {
 			return setImmediate(cb, err);
 		}
 		if (!sender) {
-			return cb('Failed account: ' + transaction.id);
+			return cb("Failed account: " + transaction.id);
 		} else {
 			modules.logic.transaction.applyUnconfirmed(transaction, sender, cb);
 		}

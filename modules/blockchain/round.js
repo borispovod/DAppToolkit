@@ -1,5 +1,5 @@
-var async = require('async');
-var crypto = require('crypto-browserify');
+var async = require("async");
+var crypto = require("crypto-browserify");
 
 var private = {}, self = null,
 	library = null, modules = null;
@@ -16,7 +16,7 @@ function Round(cb, _library) {
 private.loop = function (point, cb) {
 	var executor = modules.blockchain.accounts.getExecutor();
 	if (!executor.address) {
-		library.logger('loop', 'exit: secret doesn´t found');
+		library.logger("loop", "exit: secret doesn´t found");
 		return cb();
 	}
 
@@ -64,7 +64,7 @@ Round.prototype.generateDelegateList = function (height) {
 
 	var delegates = private.delegates.slice(0);
 
-	var currentSeed = crypto.createHash('sha256').update(seedSource, 'utf8').digest();
+	var currentSeed = crypto.createHash("sha256").update(seedSource, "utf8").digest();
 	for (var i = 0, delCount = delegates.length; i < delCount; i++) {
 		for (var x = 0; x < 4 && i < delCount; i++, x++) {
 			var newIndex = currentSeed[x] % delCount;
@@ -72,7 +72,7 @@ Round.prototype.generateDelegateList = function (height) {
 			delegates[newIndex] = delegates[i];
 			delegates[i] = b;
 		}
-		currentSeed = crypto.createHash('sha256').update(currentSeed).digest();
+		currentSeed = crypto.createHash("sha256").update(currentSeed).digest();
 	}
 
 	return delegates;
