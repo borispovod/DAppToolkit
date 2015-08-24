@@ -15,7 +15,7 @@ function Block(cb, _library) {
 
 //public methods
 Block.prototype.getBytes = function (block, withSignature) {
-	var pb, size = 32 + 8 + 4 + 4;
+	var pb, i, size = 32 + 8 + 4 + 4;
 
 	if (withSignature && block.signature) {
 		size = size + 64;
@@ -24,12 +24,12 @@ Block.prototype.getBytes = function (block, withSignature) {
 	var bb = new ByteBuffer(size, true);
 
 	pb = new Buffer(block.delegate, 'hex');
-	for (var i = 0; i < pb.length; i++) {
+	for (i = 0; i < pb.length; i++) {
 		bb.writeByte(pb[i]);
 	}
 
 	pb = bignum(block.pointId).toBuffer({size: '8'});
-	for (var i = 0; i < 8; i++) {
+	for (i = 0; i < 8; i++) {
 		bb.writeByte(pb[i]);
 	}
 
@@ -39,7 +39,7 @@ Block.prototype.getBytes = function (block, withSignature) {
 
 	if (withSignature && block.signature) {
 		pb = new Buffer(block.signature, 'hex');
-		for (var i = 0; i < pb.length; i++) {
+		for (i = 0; i < pb.length; i++) {
 			bb.writeByte(pb[i]);
 		}
 	}
