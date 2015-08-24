@@ -112,8 +112,10 @@ private.saveBlock = function (block, cb) {
 
 private.verify = function (block, cb) {
 	if (private.lastBlock.pointId == private.genesisBlock.pointId) {
+		var valid;
+
 		try {
-			var valid = modules.logic.block.verifySignature(block);
+			valid = modules.logic.block.verifySignature(block);
 		} catch (e) {
 			return cb(e.toString());
 		}
@@ -138,8 +140,11 @@ private.verify = function (block, cb) {
 				if (err || found.length) {
 					return cb("wrong block");
 				}
+
+				var valid;
+
 				try {
-					var valid = modules.logic.block.verifySignature(block);
+					valid = modules.logic.block.verifySignature(block);
 				} catch (e) {
 					return cb(e.toString());
 				}
@@ -201,8 +206,10 @@ Blocks.prototype.loadBlocksOffset = function (limit, offset, cb) {
 		blocks = private.readDbRows(blocks);
 
 		async.eachSeries(blocks, function (block, cb) {
+			var valid;
+
 			try {
-				var valid = modules.logic.block.verifySignature(block);
+				valid = modules.logic.block.verifySignature(block);
 			} catch (e) {
 				return setImmediate(cb, {
 					message: e.toString(),
