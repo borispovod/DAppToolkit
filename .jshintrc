@@ -1,6 +1,6 @@
 {
 	"eqnull": true,
-	"eqeqeq": false,
+	"eqeqeq": true,
 	"undef": true,
 	"node": true,
 	"strict": false,
