@@ -113,13 +113,15 @@ Transaction.prototype.getBytes = function (trs, skipSignature) {
 }
 
 Transaction.prototype.process = function (trs, sender, cb) {
+	var txId;
+
 	if (!private.types[trs.type]) {
 		return setImmediate(cb, 'Unknown transaction type ' + trs.type);
 	}
 
 	try {
 		var trsBytes = self.getBytes(trs);
-		var txId = modules.api.crypto.getId(trsBytes);
+		txId = modules.api.crypto.getId(trsBytes);
 	} catch (e) {
 		return setImmediate(cb, "Invalid transaction id");
 	}
