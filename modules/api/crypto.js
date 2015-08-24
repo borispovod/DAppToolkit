@@ -13,6 +13,53 @@ function Crypto(cb, _library) {
 	cb(null, self);
 }
 
+
+private.convertPublicKey = function (publicKey) {
+	return ed2curve.convertPublicKey(publicKey)
+}
+
+private.convertPrivateKey = function (privateKey) {
+	return ed2curve.convertSecretKey(privateKey);
+}
+
+private.encrypt = function (message, nonce, senderPrivateKey, recipientPublicKey) {
+	return nacl.crypto_box(message, nonce, convertPublicKey(recipientPublicKey), convertPrivateKey(senderPrivateKey));
+}
+
+private.decrypt = function (message, nonce, senderPublicKey, recipientPrivateKey) {
+	return nacl.crypto_box_open(message, nonce, convertPublicKey(senderPublicKey), convertPrivateKey(recipientPrivateKey));
+}
+
+private.getNonce = function () {
+	return nacl.crypto_box_random_nonce();;
+}
+
+private.cryptobox = function (text, nonce, key) {
+	return nacl.crypto_secretbox(nacl.encode_utf8(text), nonce, convertPrivateKey(key));
+}
+
+private.decrypt_cryptobox = function (text, nonce, key) {
+	return nacl.crypto_secretbox_open(text, nonce, convertPrivateKey(key));
+}
+
+Crypto.prototype.encrypt = function (keypair, text, cb) {
+	var nonce = private.getNonce();
+	var encrypted = private.cryptobox(text, nonce, keypair.privateKey);
+
+	return cb(null, {
+		nonce: new Buffer(nonce).toString('hex'),
+		encrypted: new Buffer(encrypted).toString('hex')
+	});
+}
+
+Crypto.prototype.decrypt = function (keypair, encrypted, nonce, cb) {
+	var decrypted = private.decrypt_cryptobox(new Buffer(encrypted, 'hex'), new Buffer(nonce, 'hex'), keypair.privateKey);
+
+	return cb(null, {
+		decrypted: new Buffer(decrypted).toString('utf8')
+	});
+}
+
 Crypto.prototype.keypair = function (secret) {
 	var hash = crypto.createHash('sha256').update(secret, 'utf8').digest();
 	var kp = nacl.crypto_sign_keypair_from_seed(hash);

@@ -106,6 +106,27 @@
 					"length": 21
 				}
 			]
-		}
+		},
+	  	{
+		  "table": "notes",
+		  "alias": "n",
+		  "type": "table",
+		  "tableFields": [
+			{
+			  "name": "data",
+			  "type": "Binary",
+			  "length": 140
+			},
+			{
+			  "name": "nonce",
+			  "type": "Binary",
+			  "length": 32
+			},
+			{
+			  "name": "shared",
+			  "type": "Int"
+			}
+		  ]
+	  	}
 	]
 }
