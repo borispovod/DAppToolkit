@@ -1,7 +1,7 @@
-var crypto = require('crypto-browserify');
-var path = require('path');
-var async = require('async');
-var util = require('util');
+var crypto = require("crypto-browserify");
+var path = require("path");
+var async = require("async");
+var util = require("util");
 
 var private = {}, self = null,
 	library = null, modules = null;
@@ -40,7 +40,7 @@ private.row2parsed = function (row) {
 			 i = 0; i < length; i++
 	) {
 		if (parsers[i] === Buffer) {
-			out[fields[i]] = parsers[i](row[i], 'hex');
+			out[fields[i]] = parsers[i](row[i], "hex");
 		} else if (parsers[i] === Array) {
 			out[fields[i]] = row[i] ? row[i].split(",") : []
 		} else {
@@ -111,9 +111,11 @@ private.saveBlock = function (block, cb) {
 }
 
 private.verify = function (block, cb) {
-	if (private.lastBlock.pointId == private.genesisBlock.pointId) {
+	if (private.lastBlock.pointId === private.genesisBlock.pointId) {
+		var valid;
+
 		try {
-			var valid = modules.logic.block.verifySignature(block);
+			valid = modules.logic.block.verifySignature(block);
 		} catch (e) {
 			return cb(e.toString());
 		}
@@ -127,7 +129,7 @@ private.verify = function (block, cb) {
 			cb(err);
 		}
 		var cryptiBlock = data.block;
-		if (cryptiBlock.previousBlock == private.lastBlock.pointId && cryptiBlock.height == private.lastBlock.pointHeight + 1) { // new correct block
+		if (cryptiBlock.previousBlock === private.lastBlock.pointId && cryptiBlock.height === private.lastBlock.pointHeight + 1) { // new correct block
 			modules.api.sql.select({
 				table: "blocks",
 				condition: {
@@ -138,8 +140,11 @@ private.verify = function (block, cb) {
 				if (err || found.length) {
 					return cb("wrong block");
 				}
+
+				var valid;
+
 				try {
-					var valid = modules.logic.block.verifySignature(block);
+					valid = modules.logic.block.verifySignature(block);
 				} catch (e) {
 					return cb(e.toString());
 				}
@@ -201,8 +206,10 @@ Blocks.prototype.loadBlocksOffset = function (limit, offset, cb) {
 		blocks = private.readDbRows(blocks);
 
 		async.eachSeries(blocks, function (block, cb) {
+			var valid;
+
 			try {
-				var valid = modules.logic.block.verifySignature(block);
+				valid = modules.logic.block.verifySignature(block);
 			} catch (e) {
 				return setImmediate(cb, {
 					message: e.toString(),
@@ -251,7 +258,7 @@ Blocks.prototype.count = function (cb) {
 	modules.api.sql.select({
 		table: "blocks",
 		fields: [{
-			expression: 'count(*)'
+			expression: "count(*)"
 		}]
 	}, function (err, rows) {
 		var count = !err && Number(rows[0][0]);
@@ -279,13 +286,13 @@ Blocks.prototype.getBlocks = function (cb, query) {
 		table: "blocks",
 		alias: "b",
 		join: [{
-			type: 'left outer',
-			table: 'transactions',
+			type: "left outer",
+			table: "transactions",
 			alias: "t",
 			on: {"b.id": "t.blockId"}
 		}, {
-			type: 'left outer',
-			table: 'asset_dapptransfer',
+			type: "left outer",
+			table: "asset_dapptransfer",
 			alias: "t_dt",
 			on: {"t.id": "t_dt.transactionId"}
 		}],
@@ -296,7 +303,7 @@ Blocks.prototype.getBlocks = function (cb, query) {
 }
 
 Blocks.prototype.onMessage = function (query) {
-	if (query.topic == "block" && private.loaded) {
+	if (query.topic === "block" && private.loaded) {
 		var block = query.message;
 		self.processBlock(block, function (err) {
 			if (err) {

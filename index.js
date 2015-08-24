@@ -1,24 +1,24 @@
 console.log("dapp loading process pid " + process.pid)
 
-require('longjohn');
-var async = require('async');
-var path = require('path');
+require("longjohn");
+var async = require("async");
+var path = require("path");
 var modules = {};
 var ready = false;
 
-process.on('uncaughtException', function (err) {
+process.on("uncaughtException", function (err) {
 	// handle the error safely
-	console.log('dapp system error', {message: err.message, stack: err.stack});
+	console.log("dapp system error", {message: err.message, stack: err.stack});
 });
 
-var d = require('domain').create();
-d.on('error', function (err) {
-	console.log('domain master', {message: err.message, stack: err.stack});
+var d = require("domain").create();
+d.on("error", function (err) {
+	console.log("domain master", {message: err.message, stack: err.stack});
 });
 d.run(function () {
 	async.auto({
 		sandbox: function (cb) {
-			cb(null, process.binding('sandbox'));
+			cb(null, process.binding("sandbox"));
 		},
 
 		logger: function (cb) {
@@ -26,7 +26,7 @@ d.run(function () {
 		},
 
 		scheme: function (cb) {
-			var db = require('./config.json').db;
+			var db = require("./config.json").db;
 
 			var fields = [];
 			var alias = {};
@@ -56,7 +56,7 @@ d.run(function () {
 		},
 
 		bus: function (cb) {
-			var changeCase = require('change-case');
+			var changeCase = require("change-case");
 			var bus = function () {
 				this.message = function () {
 					if (ready) {
@@ -65,8 +65,8 @@ d.run(function () {
 						var topic = args.shift();
 						Object.keys(modules).forEach(function (namespace) {
 							Object.keys(modules[namespace]).forEach(function (moduleName) {
-								var eventName = 'on' + changeCase.pascalCase(topic);
-								if (typeof(modules[namespace][moduleName][eventName]) == 'function') {
+								var eventName = "on" + changeCase.pascalCase(topic);
+								if (typeof(modules[namespace][moduleName][eventName]) === "function") {
 									modules[namespace][moduleName][eventName].apply(modules[namespace][moduleName][eventName], args);
 								}
 							});
@@ -74,7 +74,7 @@ d.run(function () {
 					}
 				}
 			}
-			cb(null, new bus)
+			cb(null, new bus())
 		},
 
 		sequence: function (cb) {
@@ -91,14 +91,14 @@ d.run(function () {
 			cb(null, {
 				add: function (worker, done) {
 					sequence.push(function (cb) {
-						if (worker && typeof(worker) == 'function') {
+						if (worker && typeof(worker) === "function") {
 							worker(function (err, res) {
 								setImmediate(cb);
-								done && setImmediate(done, err, res);
+								if (done) setImmediate(done, err, res);
 							});
 						} else {
 							setImmediate(cb);
-							done && setImmediate(done);
+							if (done) setImmediate(done);
 						}
 					});
 				}
@@ -106,7 +106,7 @@ d.run(function () {
 		},
 
 		modules: ["sandbox", "logger", "bus", "sequence", function (cb, scope) {
-			var module = path.join(__dirname, process.argv[3] || 'modules.full.json');
+			var module = path.join(__dirname, process.argv[3] || "modules.full.json");
 			var lib = require(module);
 
 			var tasks = [];
@@ -116,9 +116,9 @@ d.run(function () {
 				var namespace = raw[0];
 				var moduleName = raw[1];
 				tasks.push(function (cb) {
-					var d = require('domain').create();
-					d.on('error', function (err) {
-						console.log('domain ' + moduleName, {message: err.message, stack: err.stack});
+					var d = require("domain").create();
+					d.on("error", function (err) {
+						console.log("domain " + moduleName, {message: err.message, stack: err.stack});
 					});
 					d.run(function () {
 						var library = require(lib[path]);
@@ -133,7 +133,7 @@ d.run(function () {
 			});
 		}],
 
-		ready: ['modules', 'bus', function (cb, scope) {
+		ready: ["modules", "bus", function (cb, scope) {
 			ready = true;
 
 			scope.bus.message("bind", scope.modules);

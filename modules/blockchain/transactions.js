@@ -1,4 +1,4 @@
-var async = require('async');
+var async = require("async");
 
 var private = {}, self = null,
 	library = null, modules = null;
@@ -69,7 +69,7 @@ private.processUnconfirmedTransaction = function (transaction, cb) {
 		});
 	}
 
-	if (private.unconfirmedTransactionsIdIndex[transaction.id] !== undefined || private.doubleSpendingTransactions[transaction.id]) {
+	if (private.unconfirmedTransactionsIdIndex[transaction.id] !==  undefined || private.doubleSpendingTransactions[transaction.id]) {
 		return done("This transaction already exists");
 	}
 
@@ -95,7 +95,7 @@ private.applyUnconfirmedTransaction = function (transaction, cb) {
 			return setImmediate(cb, err);
 		}
 		if (!sender) {
-			return cb('Failed account: ' + transaction.id);
+			return cb("Failed account: " + transaction.id);
 		} else {
 			modules.logic.transaction.applyUnconfirmed(transaction, sender, cb);
 		}
@@ -156,7 +156,7 @@ private.addDoubleSpending = function (transaction, cb) {
 Transactions.prototype.getUnconfirmedTransactionList = function (reverse, cb) {
 	var a = [];
 	for (var i = 0; i < private.unconfirmedTransactions.length; i++) {
-		if (private.unconfirmedTransactions[i] !== false) {
+		if (private.unconfirmedTransactions[i] !==  false) {
 			a.push(private.unconfirmedTransactions[i]);
 		}
 	}
@@ -176,7 +176,7 @@ Transactions.prototype.onMessage = function (query) {
 			var executor = modules.blockchain.accounts.getExecutor();
 
 			modules.api.transactions.getTransaction(query.message.transactionId, function (err, data) {
-				if (!err && data.transaction && data.transaction.senderPublicKey == executor.keypair.publicKey) {
+				if (!err && data.transaction && data.transaction.senderPublicKey === executor.keypair.publicKey) {
 					modules.blockchain.accounts.setAccountAndGet({publicKey: executor.keypair.publicKey}, function (err, account) {
 						var transaction = modules.logic.transaction.create({
 							type: 1,

@@ -1,7 +1,7 @@
-var extend = require('extend');
-var util = require('util');
-var crypto = require('crypto-browserify');
-var bignum = require('browserify-bignum');
+var extend = require("extend");
+var util = require("util");
+var crypto = require("crypto-browserify");
+var bignum = require("browserify-bignum");
 
 var private = {}, self = null,
 	library = null, modules = null;
@@ -20,7 +20,7 @@ function Accounts(cb, _library) {
 function reverseDiff(diff) {
 	var copyDiff = diff.slice();
 	for (var i = 0; i < copyDiff.length; i++) {
-		var math = copyDiff[i][0] == '-' ? '+' : '-';
+		var math = copyDiff[i][0] === "-" ? "+" : "-";
 		copyDiff[i] = math + copyDiff[i].slice(1);
 	}
 	return copyDiff;
@@ -32,26 +32,25 @@ function applyDiff(source, diff) {
 	for (var i = 0; i < diff.length; i++) {
 		var math = diff[i][0];
 		var val = diff[i].slice(1);
+		var index = -1;
 
-		if (math == "+") {
+		if (math === "+") {
 			res = res || [];
 
-			var index = -1;
 			if (res) {
 				index = res.indexOf(val);
 			}
-			if (index != -1) {
+			if (index !== -1) {
 				return false;
 			}
 
 			res.push(val);
 		}
-		if (math == "-") {
-			var index = -1;
+		if (math === "-") {
 			if (res) {
 				index = res.indexOf(val);
 			}
-			if (index == -1) {
+			if (index === -1) {
 				return false;
 			}
 			res.splice(index, 1);
@@ -100,7 +99,7 @@ Accounts.prototype.getExecutor = function () {
 }
 
 Accounts.prototype.generateAddressByPublicKey = function (publicKey) {
-	var publicKeyHash = crypto.createHash('sha256').update(publicKey, 'hex').digest();
+	var publicKeyHash = crypto.createHash("sha256").update(publicKey, "hex").digest();
 	var temp = new Buffer(8);
 	for (var i = 0; i < 8; i++) {
 		temp[i] = publicKeyHash[7 - i];
@@ -167,7 +166,7 @@ Accounts.prototype.mergeAccountAndGet = function (data, cb) {
 
 	Object.keys(data).forEach(function (key) {
 		var trueValue = data[key];
-		if (typeof trueValue == "number") {
+		if (typeof trueValue === "number") {
 			account[key] = account[key] + trueValue;
 		} else if (util.isArray(trueValue)) {
 			account[key] = applyDiff(account[key], trueValue);
@@ -194,7 +193,7 @@ Accounts.prototype.undoMerging = function (data, cb) {
 
 	Object.keys(data).forEach(function (key) {
 		var trueValue = data[key];
-		if (typeof trueValue == "number") {
+		if (typeof trueValue === "number") {
 			account[key] = account[key] - trueValue;
 		} else if (util.isArray(trueValue)) {
 			trueValue = reverseDiff(trueValue);

@@ -7,11 +7,11 @@ function Transport(cb, _library) {
 	cb(null, self);
 }
 
-Transport.prototype.message = function (topic, message, cb) {
+Transport.prototype.message = function (topic, msg, cb) {
 	var message = {
 		call: "transport#message",
 		args: {
-			message: message,
+			message: msg,
 			topic: topic
 		}
 	};

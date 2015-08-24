@@ -1,6 +1,6 @@
-var ByteBuffer = require('bytebuffer');
-var crypto = require('crypto-browserify');
-var bignum = require('browserify-bignum');
+var ByteBuffer = require("bytebuffer");
+var crypto = require("crypto-browserify");
+var bignum = require("browserify-bignum");
 
 var private = {}, self = null,
 	library = null, modules = null;
@@ -15,7 +15,7 @@ function Block(cb, _library) {
 
 //public methods
 Block.prototype.getBytes = function (block, withSignature) {
-	var size = 32 + 8 + 4 + 4;
+	var pb, i, size = 32 + 8 + 4 + 4;
 
 	if (withSignature && block.signature) {
 		size = size + 64;
@@ -23,13 +23,13 @@ Block.prototype.getBytes = function (block, withSignature) {
 
 	var bb = new ByteBuffer(size, true);
 
-	var pb = new Buffer(block.delegate, 'hex');
-	for (var i = 0; i < pb.length; i++) {
+	pb = new Buffer(block.delegate, "hex");
+	for (i = 0; i < pb.length; i++) {
 		bb.writeByte(pb[i]);
 	}
 
-	var pb = bignum(block.pointId).toBuffer({size: '8'});
-	for (var i = 0; i < 8; i++) {
+	pb = bignum(block.pointId).toBuffer({size: "8"});
+	for (i = 0; i < 8; i++) {
 		bb.writeByte(pb[i]);
 	}
 
@@ -38,8 +38,8 @@ Block.prototype.getBytes = function (block, withSignature) {
 	bb.writeInt(block.count);
 
 	if (withSignature && block.signature) {
-		var pb = new Buffer(block.signature, 'hex');
-		for (var i = 0; i < pb.length; i++) {
+		pb = new Buffer(block.signature, "hex");
+		for (i = 0; i < pb.length; i++) {
 			bb.writeByte(pb[i]);
 		}
 	}
@@ -52,7 +52,7 @@ Block.prototype.getBytes = function (block, withSignature) {
 
 Block.prototype.verifySignature = function (block) {
 	var blockBytes = self.getBytes(block);
-	if (block.id != modules.api.crypto.getId(blockBytes)) {
+	if (block.id !==  modules.api.crypto.getId(blockBytes)) {
 		return false;
 	}
 	if (!modules.api.crypto.verify(block.delegate, block.signature, blockBytes)) {
