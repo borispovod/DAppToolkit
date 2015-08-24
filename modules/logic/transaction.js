@@ -61,7 +61,7 @@ Transaction.prototype.attachAssetType = function (typeId, instance) {
 }
 
 Transaction.prototype.getBytes = function (trs, skipSignature) {
-	var bb;
+	var bb, i;
 
 	if (!private.types[trs.type]) {
 		throw Error('Unknown transaction type ' + trs.type);
@@ -75,7 +75,7 @@ Transaction.prototype.getBytes = function (trs, skipSignature) {
 		bb.writeByte(trs.type);
 
 		var senderPublicKeyBuffer = new Buffer(trs.senderPublicKey, 'hex');
-		for (var i = 0; i < senderPublicKeyBuffer.length; i++) {
+		for (i = 0; i < senderPublicKeyBuffer.length; i++) {
 			bb.writeByte(senderPublicKeyBuffer[i]);
 		}
 
@@ -83,11 +83,11 @@ Transaction.prototype.getBytes = function (trs, skipSignature) {
 			var recipient = trs.recipientId.slice(0, -1);
 			recipient = bignum(recipient).toBuffer({size: 8});
 
-			for (var i = 0; i < 8; i++) {
+			for (i = 0; i < 8; i++) {
 				bb.writeByte(recipient[i] || 0);
 			}
 		} else {
-			for (var i = 0; i < 8; i++) {
+			for (i = 0; i < 8; i++) {
 				bb.writeByte(0);
 			}
 		}
@@ -95,14 +95,14 @@ Transaction.prototype.getBytes = function (trs, skipSignature) {
 		bb.writeLong(trs.amount);
 
 		if (assetSize > 0) {
-			for (var i = 0; i < assetSize; i++) {
+			for (i = 0; i < assetSize; i++) {
 				bb.writeByte(assetBytes[i]);
 			}
 		}
 
 		if (!skipSignature && trs.signature) {
 			var signatureBuffer = new Buffer(trs.signature, 'hex');
-			for (var i = 0; i < signatureBuffer.length; i++) {
+			for (i = 0; i < signatureBuffer.length; i++) {
 				bb.writeByte(signatureBuffer[i]);
 			}
 		}
