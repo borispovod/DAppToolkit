@@ -108,14 +108,14 @@
 			]
 		},
 	  	{
-		  "table": "notes",
+		  "table": "asset_notes",
 		  "alias": "n",
 		  "type": "table",
 		  "tableFields": [
 			{
 			  "name": "data",
 			  "type": "Binary",
-			  "length": 140
+			  "length": 2048
 			},
 			{
 			  "name": "nonce",
@@ -125,6 +125,11 @@
 			{
 			  "name": "shared",
 			  "type": "Int"
+			},
+			{
+			  "name": "transactionId",
+			  "type": "String",
+			  "length": 21
 			}
 		  ]
 	  	}

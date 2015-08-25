@@ -23,8 +23,8 @@ Note.prototype.calculateFee = function (trs) {
 }
 
 Note.prototype.verify = function (trs, sender, cb) {
-	if (new Buffer(trs.data, 'hex').length > 160) {
-		return cb("Max size of encrypted data is 160 byte, please, reduce your data");
+	if (new Buffer(trs.data, 'hex').length > 2048) {
+		return cb("Max size of encrypted data is 2048 byte, please, reduce your data");
 	}
 
 	cb(null, trs);
@@ -54,14 +54,29 @@ Note.prototype.undoUnconfirmed = function (trs, sender, cb) {
 	setImmediate(cb);
 }
 
-Note.prototype.save = function (cb) {
-	// how to save???
-	setImmediate(cb);
+Note.prototype.save = function (trs, cb) {
+	modules.api.sql.insert({
+		table: "asset_notes",
+		values: {
+			transactionId: trs.id,
+			data: trs.data,
+			nonce: trs.nonce,
+			shared: trs.shared
+		}
+	}, cb);
 }
 
 Note.prototype.dbRead = function (row) {
-	// how to read???
-	return null;
+	if (!row.n_data) {
+		return null;
+	}
+
+	return {
+		transactionId: row.n_transactionId,
+		data: new Buffer(row.n_data).toString('hex'),
+		nonce: new Buffer(row.n_nonce).toString('hex'),
+		shared: row.n_shared
+	};
 }
 
 Note.prototype.onBind = function (_modules) {
@@ -82,26 +97,38 @@ Note.prototype.encrypt = function (query, cb) {
 	var account = modules.accounts.getAccount(modules.accounts.generateAddressByPublicKey(keypair.publicKey.toString('hex')));
 
 	if (shared) {
-		transaction = library.logic.transaction.create({
-			type: self.type,
-			sender: account,
-			keypair: keypair,
-			data: new Buffer(data, 'utf8').toString('hex'),
-			shared: shared
-		});
+		try {
+			transaction = library.logic.transaction.create({
+				type: self.type,
+				sender: account,
+				keypair: keypair,
+				data: new Buffer(data, 'utf8').toString('hex'),
+				shared: shared
+			});
+		} catch (e) {
+			return setImmediate(cb, e);
+		}
+
+		modules.transactions.receiveTransactions([transaction], cb);
 	} else {
 		modules.api.crypto.encrypt(keypair, data, function (err, result) {
 			if (err) {
 				return cb(err);
 			}
 
-			transaction = library.logic.transaction.create({
-				type: self.type,
-				sender: account,
-				keypair: keypair,
-				data: result.data,
-				shared: shared
-			});
+			try {
+				transaction = library.logic.transaction.create({
+					type: self.type,
+					sender: account,
+					keypair: keypair,
+					data: result.data,
+					shared: shared
+				});
+			} catch (e) {
+				return setImmediate(cb, e);
+			}
+
+			modules.transactions.receiveTransactions([transaction], cb);
 		});
 	}
 }
