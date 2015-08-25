@@ -26,7 +26,7 @@ private.loop = function (point, cb) {
 		if (currentDelegate) {
 			modules.blockchain.blocks.createBlock(executor, point, cb);
 		} else {
-			cb();
+			cb("skip slot: another delegate");
 		}
 
 	}, function (err) {
@@ -82,7 +82,7 @@ Round.prototype.onBind = function (_modules) {
 	modules = _modules;
 }
 
-Round.prototype.onBlockchainReady = function () {
+Round.prototype.onBlockchainLoaded = function () {
 	var genesisBlock = modules.blockchain.blocks.genesisBlock();
 	//private.delegates = genesisBlock.associate;
 	private.delegates.push(modules.blockchain.accounts.generateAddressByPublicKey(genesisBlock.delegate));

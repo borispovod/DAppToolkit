@@ -1,4 +1,5 @@
 var extend = require("extend");
+var ByteBuffer = require('bytebuffer');
 
 var private = {}, self = null,
 	library = null, modules = null;
@@ -38,6 +39,7 @@ Transaction.prototype.create = function (data) {
 	var trsBytes = self.getBytes(trs);
 	trs.signature = modules.api.crypto.sign(data.keypair, trsBytes);
 
+	var trsBytes = self.getBytes(trs);
 	trs.id = modules.api.crypto.getId(trsBytes);
 
 	trs.fee = private.types[trs.type].calculateFee.call(self, trs) || false;
@@ -50,8 +52,7 @@ Transaction.prototype.attachAssetType = function (typeId, instance) {
 		typeof instance.calculateFee == 'function' && typeof instance.verify == 'function' &&
 		typeof instance.apply == 'function' && typeof instance.undo == 'function' &&
 		typeof instance.applyUnconfirmed == 'function' && typeof instance.undoUnconfirmed == 'function' &&
-		typeof instance.process == 'function' && typeof instance.save == 'function' &&
-		typeof instance.dbRead == 'function'
+		typeof instance.save == 'function' && typeof instance.dbRead == 'function'
 	) {
 		private.types[typeId] = instance;
 	} else {
@@ -117,7 +118,8 @@ Transaction.prototype.process = function (trs, sender, cb) {
 	}
 
 	try {
-		var txId = self.getId(trs);
+		var trsBytes = self.getBytes(trs);
+		var txId = modules.api.crypto.getId(trsBytes);
 	} catch (e) {
 		return setImmediate(cb, "Invalid transaction id");
 	}
@@ -127,34 +129,12 @@ Transaction.prototype.process = function (trs, sender, cb) {
 		trs.id = txId;
 	}
 
-	if (!sender) {
-		return setImmediate(cb, "Can't process transaction, sender not found");
-	}
-
-	trs.senderId = sender.address;
-
-	if (!self.verifySignature(trs, trs.senderPublicKey, trs.signature)) {
-		return setImmediate(cb, "Can't verify signature");
-	}
-
-	private.types[trs.type].process.call(self, trs, sender, function (err, trs) {
-		if (err) {
-			return setImmediate(cb, err);
+	modules.api.transactions.getTransaction(trs.id, function (err, data) {
+		if (err != "Transaction not found") {
+			return cb("Can't process transaction, transaction already confirmed");
 		}
 
-		self.scope.dbLite.query("SELECT count(id) FROM trs WHERE id=$id", {id: trs.id}, {"count": Number}, function (err, rows) {
-			if (err) {
-				return cb("Internal sql error");
-			}
-
-			var res = rows.length && rows[0];
-
-			if (res.count) {
-				return cb("Can't process transaction, transaction already confirmed");
-			}
-
-			cb(null, trs);
-		});
+		cb(null, trs);
 	});
 }
 
@@ -206,7 +186,7 @@ Transaction.prototype.verify = function (trs, sender, cb) { //inheritance
 		return setImmediate(cb, "Invalid transaction type/fee: " + trs.id);
 	}
 	//check amount
-	if (trs.amount < 0 || trs.amount > 100000000 * constants.fixedPoint || String(trs.amount).indexOf('.') >= 0 || trs.amount.toString().indexOf('e') >= 0) {
+	if (trs.amount < 0 || trs.amount > 100000000 * Math.pow(10, 8) || String(trs.amount).indexOf('.') >= 0 || trs.amount.toString().indexOf('e') >= 0) {
 		return setImmediate(cb, "Invalid transaction amount: " + trs.id);
 	}
 
@@ -225,7 +205,7 @@ Transaction.prototype.apply = function (trs, sender, cb) {
 		return setImmediate(cb, "Balance has no XCR: " + trs.id);
 	}
 
-	modules.blockchain.accounts.mergeAccountAndGet(sender.address, {balance: -amount}, function (err, sender) {
+	modules.blockchain.accounts.mergeAccountAndGet({address: sender.address, balance: -amount}, function (err, sender) {
 		if (err) {
 			return cb(err);
 		}
@@ -247,7 +227,7 @@ Transaction.prototype.undo = function (trs, sender, cb) {
 
 	var amount = trs.amount + trs.fee;
 
-	modules.blockchain.accounts.mergeAccountAndGet(sender.address, {balance: amount}, function (err, sender) {
+	modules.blockchain.accounts.mergeAccountAndGet({address: sender.address, balance: amount}, function (err, sender) {
 		if (err) {
 			return cb(err);
 		}
@@ -273,7 +253,7 @@ Transaction.prototype.applyUnconfirmed = function (trs, sender, cb) {
 		return setImmediate(cb, 'Account has no balance: ' + trs.id);
 	}
 
-	modules.blockchain.accounts.mergeAccountAndGet(sender.address, {u_balance: -amount}, function (err, sender) {
+	modules.blockchain.accounts.mergeAccountAndGet({address: sender.address, u_balance: -amount}, function (err, sender) {
 		if (err) {
 			return cb(err);
 		}
@@ -313,12 +293,6 @@ Transaction.prototype.save = function (trs, cb) {
 		return cb('Unknown transaction type ' + trs.type);
 	}
 
-	try {
-		var signature = new Buffer(trs.signature, 'hex');
-	} catch (e) {
-		return cb(e.toString())
-	}
-
 	modules.api.sql.insert({
 		table: "transactions",
 		values: {
@@ -329,7 +303,7 @@ Transaction.prototype.save = function (trs, cb) {
 			recipientId: trs.recipientId,
 			amount: trs.amount,
 			fee: trs.fee,
-			signature: signature,
+			signature: trs.signature,
 			blockId: trs.blockId
 		}
 	}, function (err) {

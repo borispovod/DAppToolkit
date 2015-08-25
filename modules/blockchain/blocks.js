@@ -122,10 +122,11 @@ private.verify = function (block, cb) {
 		}
 		return cb();
 	}
-	modules.api.blocks.getBlock(block.pointId, function (err, cryptiBlock) {
+	modules.api.blocks.getBlock(block.pointId, function (err, data) {
 		if (err) {
 			cb(err);
 		}
+		var cryptiBlock = data.block;
 		if (cryptiBlock.previousBlock == private.lastBlock.pointId && cryptiBlock.height == private.lastBlock.pointHeight + 1) { // new correct block
 			modules.api.sql.select({
 				table: "blocks",
@@ -208,7 +209,6 @@ Blocks.prototype.loadBlocksOffset = function (limit, offset, cb) {
 					block: block
 				});
 			}
-			console.log("valid", valid)
 			if (!valid) {
 				return setImmediate(cb, {
 					message: "Can't verify signature",
@@ -306,7 +306,7 @@ Blocks.prototype.onMessage = function (query) {
 	}
 }
 
-Blocks.prototype.onBlockchainReady = function () {
+Blocks.prototype.onBlockchainLoaded = function () {
 	private.loaded = true;
 }
 
