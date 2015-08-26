@@ -1,0 +1,65 @@
+
+.lock_wrapper {
+  position: relative;
+}
+
+.outer {
+  display: table;
+  position: absolute;
+  height: 100%;
+  width: 100%;
+}
+
+.middle {
+  display: table-cell;
+  vertical-align: middle;
+}
+
+.inner {
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
+}
+
+.light_lock {
+  font-size: 9rem !important;
+  color: #d9d9d9;
+}
+
+.dark_lock {
+  font-size: 9rem !important;
+  color: #cbcbcb;
+}
+
+.password_input {
+  box-sizing: border-box;
+  font-size: 1.7rem;
+  line-height: 1.7rem;
+  color: #ffffff;
+  opacity: 0.75;
+  padding: 0px 40px;
+  width: 100%;
+  border: none;
+  height: 100%;
+  background-color: transparent;
+  &::-webkit-input-placeholder {
+    color: #ffffff;
+    opacity: 0.65;
+  }
+  &:-moz-placeholder {
+    color: #ffffff;
+    opacity: 0.65;
+  }
+  &::-moz-placeholder {
+    color: #ffffff;
+    opacity: 0.65;
+  }
+  &:-ms-input-placeholder {
+    color: #ffffff;
+    opacity: 0.65;
+  }
+  &:active, &:focus {
+    border: none;
+    outline: none;
+  }
+}

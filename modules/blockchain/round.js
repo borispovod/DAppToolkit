@@ -95,7 +95,9 @@ Round.prototype.onMessage = function (query) {
 	if (query.topic == "point" && private.loaded) {
 		var blockId = query.message;
 		private.loop(blockId, function (err) {
-			console.log("loop", err)
+			if (err) {
+				library.logger("loop error", err)
+			}
 		});
 	}
 }

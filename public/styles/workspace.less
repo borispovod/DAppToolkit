@@ -1,0 +1,71 @@
+.user {
+  font-size: 15px;
+  color: #9e9e9e;
+  text-align: center;
+  line-height: 40px;
+}
+.title_input {
+  box-sizing: border-box;
+  font-size: 1.7rem;
+  line-height: 1.7rem;
+  color: #ffffff;
+  opacity: 0.75;
+  padding: 0 250px 0 40px;
+  text-overflow: ellipsis;
+  border: none;
+  background-color: transparent;
+  width: 100%;
+  height: 100%;
+  &::-webkit-input-placeholder {
+    color: #ffffff;
+    opacity: 0.65;
+  }
+  &:-moz-placeholder {
+    color: #ffffff;
+    opacity: 0.65;
+  }
+  &::-moz-placeholder {
+    color: #ffffff;
+    opacity: 0.65;
+  }
+  &:-ms-input-placeholder {
+    color: #ffffff;
+    opacity: 0.65;
+  }
+  &:active, &:focus {
+    border: none;
+    outline: none;
+  }
+}
+
+.pretty-scrolling {
+  font-size: 20px;
+  line-height: normal;
+  color: #424242;
+  border: none;
+  resize: none;
+  box-sizing: border-box;
+  margin: 31px 0 31px;
+  padding-left: 31px;
+  padding-right: 31px;
+
+  &:active, &:focus {
+    border: none;
+    outline: none;
+  }
+
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background-color: rgba(207, 216, 220, 0.4);
+    opacity: 0.1;
+    border-radius: 10px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    border-radius: 10px;
+    background-color: rgba(55, 71, 79, 0.2);
+  }
+}

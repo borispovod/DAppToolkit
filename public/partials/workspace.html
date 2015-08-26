@@ -1,0 +1,38 @@
+<form style="height: 100%;">
+    <div class="left_panel">
+        <div class="header">
+            <div class="logo" style="left: calc(50% - (36px));"></div>
+        </div>
+
+        <div class="header_border"></div>
+
+        <div class="user">Hello, {{userData.user}}!</div>
+        <ul class="note-list">
+            <li ng-class="{'current-note': note.currentNote.id==item.id}" ng-click="note.load(item)"
+                ng-repeat="($index, item) in note.list track by $index">
+                <i ng-if="note.currentNote.id==item.id" class="fa fa-eye" style="
+    margin-right: 10px;
+"></i>{{item.title}}
+            </li>
+        </ul>
+    </div>
+    <div class="right_panel">
+        <div class="header">
+            <div class="date">{{note.currentNote.date}}
+            </div>
+            <dropdown scope-note="note"></dropdown>
+            <input ng-model="note.currentNote.title" ng-disabled="!note.currentNote.editable" type="text"
+                   class="title_input"
+                   placeholder="Title.."/>
+        </div>
+
+        <div class="header_border"></div>
+
+        <textarea placeholder="Your text goes here..." ng-model="note.currentNote.text"
+                  ng-readonly="!note.currentNote.editable" class="pretty-scrolling" style="
+      height: calc(100% - (176px));
+  width: calc(100% - (22px));
+"></textarea>
+    </div>
+    <input type="submit" id="submit" value="Submit" hidden/>
+</form>

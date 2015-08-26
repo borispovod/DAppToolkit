@@ -1,0 +1,39 @@
+<div class="left_panel">
+    <div class="header">
+        <div class="logo" style="left: calc(50% - (36px));"></div>
+    </div>
+
+    <div class="header_border"></div>
+
+    <div class="lock_wrapper" style="height: calc(100%-(114px));">
+        <div class="outer">
+            <div class="middle">
+                <div class="inner">
+                    <i class="fa fa-lock light_lock"></i></div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="right_panel">
+    <div class="header" style="position: relative;">
+        <form ng-submit="login(pass)" style="height: 100%;">
+            <input ng-model="pass" type="password" class="password_input"
+                   placeholder="Please input your passphrase here.."/>
+            <input type="submit" id="submit" value="Submit" hidden/>
+        </form>
+    </div>
+
+    <div class="header_border">
+
+    </div>
+
+    <div class="lock_wrapper" style="height: calc(100%-(114px));">
+        <div class="outer">
+            <div class="middle">
+                <div class="inner">
+                    <i class="fa fa-lock dark_lock"></i></div>
+            </div>
+        </div>
+    </div>
+</div>
+</div>

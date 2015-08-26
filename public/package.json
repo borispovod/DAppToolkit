@@ -1,0 +1,14 @@
+{
+  "name": "encrypti",
+  "version": "0.0.1",
+  "devDependencies": {
+    "grunt": "~0.4.5",
+    "grunt-contrib-concat": "^0.5.1",
+    "grunt-contrib-cssmin": "^0.13.0",
+    "grunt-contrib-less": "~0.11.1"
+  },
+  "dependencies": {
+    "angular": "^1.4.4",
+    "angular-ui-router": "~0.2.10"
+  }
+}

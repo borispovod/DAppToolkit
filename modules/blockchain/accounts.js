@@ -162,13 +162,17 @@ Accounts.prototype.mergeAccountAndGet = function (data, cb) {
 	var account = private.getAccount(address);
 
 	if (!account) {
-		account = private.addAccount({address: address});
+		var raw = {address: address};
+		if (data.publicKey) {
+			raw.publicKey = data.publicKey;
+		}
+		account = private.addAccount(raw);
 	}
 
 	Object.keys(data).forEach(function (key) {
 		var trueValue = data[key];
 		if (typeof trueValue == "number") {
-			account[key] = account[key] + trueValue;
+			account[key] = (account[key] || 0) + trueValue;
 		} else if (util.isArray(trueValue)) {
 			account[key] = applyDiff(account[key], trueValue);
 		}
@@ -189,13 +193,17 @@ Accounts.prototype.undoMerging = function (data, cb) {
 	var account = private.getAccount(address);
 
 	if (!account) {
-		account = private.addAccount({address: address});
+		var raw = {address: address};
+		if (data.publicKey) {
+			raw.publicKey = data.publicKey;
+		}
+		account = private.addAccount(raw);
 	}
 
 	Object.keys(data).forEach(function (key) {
 		var trueValue = data[key];
 		if (typeof trueValue == "number") {
-			account[key] = account[key] - trueValue;
+			account[key] = (account[key] || 0) - trueValue;
 		} else if (util.isArray(trueValue)) {
 			trueValue = reverseDiff(trueValue);
 			account[key] = applyDiff(account[key], trueValue);
@@ -209,11 +217,10 @@ Accounts.prototype.onBind = function (_modules) {
 	modules = _modules;
 }
 
-Accounts.prototype.open = function (query, cb) {
+Accounts.prototype.open = function (cb, query) {
 	var keypair = modules.api.crypto.keypair(query.secret);
 	var address = self.generateAddressByPublicKey(keypair.publicKey);
-
-	cb(null, {account: self.getAccount(address)});
+	cb(null, {account: private.getAccount(address)});
 }
 
 module.exports = Accounts;

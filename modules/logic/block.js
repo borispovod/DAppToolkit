@@ -15,13 +15,24 @@ function Block(cb, _library) {
 
 //public methods
 Block.prototype.getBytes = function (block, withSignature) {
-	var size = 32 + 8 + 4 + 4;
+	var size = 8 + 32 + 8 + 4 + 4;
 
 	if (withSignature && block.signature) {
-		size = size + 64;
+		size = size + 64; //TODO: check size
 	}
 
 	var bb = new ByteBuffer(size, true);
+
+	if (block.prevBlockId) {
+		var pb = bignum(block.prevBlockId).toBuffer({size: '8'});
+		for (var i = 0; i < 8; i++) {
+			bb.writeByte(pb[i]);
+		}
+	} else {
+		for (var i = 0; i < 8; i++) {
+			bb.writeByte(0);
+		}
+	}
 
 	var pb = new Buffer(block.delegate, 'hex');
 	for (var i = 0; i < pb.length; i++) {
@@ -39,6 +50,7 @@ Block.prototype.getBytes = function (block, withSignature) {
 
 	if (withSignature && block.signature) {
 		var pb = new Buffer(block.signature, 'hex');
+		console.log("size", pb.length)
 		for (var i = 0; i < pb.length; i++) {
 			bb.writeByte(pb[i]);
 		}
@@ -67,6 +79,7 @@ Block.prototype.save = function (block, cb) {
 		table: "blocks",
 		values: {
 			id: block.id,
+			prevBlockId: block.prevBlockId,
 			pointId: block.pointId,
 			pointHeight: block.pointHeight,
 			delegate: block.delegate,
@@ -86,6 +99,7 @@ Block.prototype.save = function (block, cb) {
 Block.prototype.dbRead = function (row) {
 	return {
 		id: row.b_id,
+		prevBlockId: row.b_prevBlockId,
 		pointId: row.b_pointId,
 		pointHeight: row.b_pointHeight,
 		delegate: row.b_delegate,

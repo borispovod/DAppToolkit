@@ -19,8 +19,7 @@ OutsideTransfer.prototype.create = function (data, trs) {
 }
 
 OutsideTransfer.prototype.calculateFee = function (trs) {
-	var fee = parseInt(trs.amount / 100 * 0.1);
-	return fee || 1;
+	return 0;
 }
 
 OutsideTransfer.prototype.verify = function (trs, sender, cb) {
@@ -47,26 +46,30 @@ OutsideTransfer.prototype.getBytes = function (trs) {
 
 OutsideTransfer.prototype.apply = function (trs, sender, cb) {
 	modules.blockchain.accounts.mergeAccountAndGet({
-		address: trs.senderId,
-		balance: trs.amount,
-		u_balance: trs.amount
+		address: sender.address,
+		balance: trs.amount
 	}, cb);
 }
 
 OutsideTransfer.prototype.undo = function (trs, sender, cb) {
 	modules.blockchain.accounts.undoMerging({
-		address: trs.senderId,
-		balance: trs.amount,
-		u_balance: trs.amount
+		address: sender.address,
+		balance: trs.amount
 	}, cb);
 }
 
 OutsideTransfer.prototype.applyUnconfirmed = function (trs, sender, cb) {
-	setImmediate(cb);
+	modules.blockchain.accounts.mergeAccountAndGet({
+		address: sender.address,
+		u_balance: trs.amount
+	}, cb);
 }
 
 OutsideTransfer.prototype.undoUnconfirmed = function (trs, sender, cb) {
-	setImmediate(cb);
+	modules.blockchain.accounts.undoMerging({
+		address: sender.address,
+		u_balance: trs.amount
+	}, cb);
 }
 
 OutsideTransfer.prototype.save = function (trs, cb) {
@@ -84,7 +87,9 @@ OutsideTransfer.prototype.dbRead = function (row) {
 		return null;
 	}
 	return {
-		src_id: row.t_dt_src_id
+		outsidetransfer: {
+			src_id: row.t_dt_src_id
+		}
 	};
 }
 

@@ -1,0 +1,19 @@
+<div class="dropdown-container" ng-class="{ show: listVisible }">
+    <div class="dropdown-display" ng-class="{ clicked: listVisible }">
+        <span class="dots" ng-click="show();"><span  class="image_wrapper"></span> </span>
+    </div>
+    <div class="dropdown-list">
+        <div>
+            <div>
+                <span ng-click="note.new()">New Text</span>
+            </div>
+            <div>
+                <span ng-click="note.share()">Share</span>
+            </div>
+            <div>
+                <span ng-click="logout()">Logout</span>
+            </div>
+
+        </div>
+    </div>
+</div>

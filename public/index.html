@@ -1,8 +1,20 @@
-<html>
+<!DOCTYPE html>
+<html lang="en" ng-app="encryptiApp">
 <head>
-    <title>Hello, world!</title>
+    <meta charset="UTF-8">
+    <title>Encrypti</title>
+    <link rel="stylesheet" href="static/css/app.css">
+    <link rel="stylesheet" href="node_modules/font-awesome/css/font-awesome.min.css">
+    <script src="node_modules/angular/angular.min.js"></script>
+    <script src="node_modules/angular-ui-router/build/angular-ui-router.min.js"></script>
+    <script src="static/js/app.js"></script>
 </head>
 <body>
-<h1>Hello, world!</h1>
+<div class="footer">Based on Crypti Dapps
+</div>
+<div ui-view class="app_wrapper" style="height: calc(100% - (160px));">
+
+</div>
+
 </body>
 </html>
