@@ -61,7 +61,8 @@ Note.prototype.save = function (trs, cb) {
 			transactionId: trs.id,
 			data: trs.data,
 			nonce: trs.nonce,
-			shared: trs.shared
+			shared: trs.shared,
+			alias: trs.alias
 		}
 	}, cb);
 }
