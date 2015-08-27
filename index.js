@@ -3,6 +3,7 @@ console.log("dapp loading process pid " + process.pid)
 require('longjohn');
 var async = require('async');
 var path = require('path');
+var ZSchema = require("z-schema");
 var modules = {};
 var ready = false;
 
@@ -59,6 +60,11 @@ d.run(function () {
 
 			cb(null, {scheme: db, fields: fields, alias: alias});
 		}],
+
+		validator: function (cb) {
+			var validator = new ZSchema();
+			cb(null, validator);
+		},
 
 		bus: function (cb) {
 			var changeCase = require('change-case');

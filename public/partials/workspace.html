@@ -6,7 +6,8 @@
 
         <div class="header_border"></div>
 
-        <div class="user">Hello, {{userData.user}}!</div>
+        <div class="user">Hello, {{userData.address}}!</div>
+        <div class="user">Balance: {{(userData.balance || 0) | xcrFilter }} XCR</div>
         <ul class="note-list">
             <li ng-class="{'current-note': note.currentNote.id==item.id}" ng-click="note.load(item)"
                 ng-repeat="($index, item) in note.list track by $index">

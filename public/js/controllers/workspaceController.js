@@ -1,8 +1,8 @@
-angular.module('encryptiApp').controller('workspaceController', ['userService', '$scope',
-    function (userService, $scope) {
+angular.module('encryptiApp').controller('workspaceController', ['userService', 'authService', 'noteService', '$scope',
+    function (userService, authService, noteService, $scope) {
 
         $scope.note = {
-            list: [{title: 'test1', id: 1}, {title: 'test2', id: 2}],
+            list: [],
             currentNote: {
                 title: 'You don`t have a text file yet, you should add one. :)',
                 text: 'How to add your own text file:\n' +
@@ -26,14 +26,29 @@ angular.module('encryptiApp').controller('workspaceController', ['userService', 
                 this.currentNote = {title: '', text: '', editable: true}
             },
             share: function () {
-                //sharing code for this.currentNote here
+                noteService.save(this.currentNote, function (err) {
+                    if (err) {
+                        alert(err);
+                    }
+                });
+            },
+            encrypt: function () {
+                noteService.encrypt(this.currentNote, function (err) {
+                    if (err) {
+                        alert(err);
+                    }
+                })
             }
         };
 
-        $scope.userData = userService;
+        $scope.userData = userService.user;
 
         if ($scope.note.list.length > 0) {
             $scope.note.load($scope.note.list[0]);
+        }
+
+        $scope.logout = function () {
+            authService.setUnlogged();
         }
 
     }]);

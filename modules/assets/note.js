@@ -3,14 +3,19 @@ var private = {}, self = null,
 
 function Note(cb, _library) {
 	self = this;
-	self.type = 2;
 	library = _library;
 	cb(null, self);
 }
 
 Note.prototype.create = function (data, trs) {
 	trs.data = data.data;
-	trs.nonce = data.nonce;
+
+	if (data.nonce) {
+		trs.nonce = data.nonce;
+	} else {
+		trs.nonce = new Buffer(32);
+	}
+
 	trs.shared = data.shared;
 
 	return trs;
@@ -82,56 +87,97 @@ Note.prototype.dbRead = function (row) {
 
 Note.prototype.onBind = function (_modules) {
 	modules = _modules;
-	modules.logic.transaction.attachAssetType(self.type, self);
+	modules.logic.transaction.attachAssetType(2, self);
 }
 
-Note.prototype.encrypt = function (query, cb) {
-	var secret = query.secret,
-		data = query.data,
-		shared = query.shared,
-		self = this;
-
-	var transaction;
-	var keypair = modules.api.crypto.keypair(secret);
-
-	// find sender
-	var account = modules.accounts.getAccount(modules.accounts.generateAddressByPublicKey(keypair.publicKey.toString('hex')));
-
-	if (shared) {
-		try {
-			transaction = library.logic.transaction.create({
-				type: self.type,
-				sender: account,
-				keypair: keypair,
-				data: new Buffer(data, 'utf8').toString('hex'),
-				shared: shared
-			});
-		} catch (e) {
-			return setImmediate(cb, e);
+Note.prototype.encrypt = function (cb, query) {
+	library.validator.validate(query, {
+		type: "object",
+		properties: {
+			secret: {
+				type: "string",
+				minLength: 1,
+				maxLength: 100
+			},
+			data: {
+				type: "string",
+				minLength: 1,
+				maxLength: 2000
+			},
+			shared: {
+				type: "integer",
+				minimum: 0,
+				maximum: 1
+			}
+		},
+		required: ['secret', 'data', 'shared']
+	}, function (err) {
+		if (err) {
+			return cb(err[0].message);
 		}
 
-		modules.transactions.receiveTransactions([transaction], cb);
-	} else {
-		modules.api.crypto.encrypt(keypair, data, function (err, result) {
+		var secret = query.secret,
+			data = query.data,
+			shared = query.shared,
+			self = this;
+
+		var transaction;
+		var keypair = modules.api.crypto.keypair(secret);
+
+		// find sender
+		var account = modules.blockchain.accounts.getAccount({
+			publicKey: keypair.publicKey.toString('hex')
+		}, function (err, account) {
 			if (err) {
 				return cb(err);
 			}
 
-			try {
-				transaction = library.logic.transaction.create({
-					type: self.type,
-					sender: account,
-					keypair: keypair,
-					data: result.data,
-					shared: shared
-				});
-			} catch (e) {
-				return setImmediate(cb, e);
-			}
 
-			modules.transactions.receiveTransactions([transaction], cb);
+			if (shared) {
+				try {
+					transaction = library.modules.logic.transaction.create({
+						type: 2,
+						sender: account,
+						keypair: keypair,
+						data: new Buffer(data, 'utf8').toString('hex'),
+						shared: shared
+					});
+				} catch (e) {
+					return setImmediate(cb, e.toString(0));
+				}
+
+				modules.blockchain.transactions.onMessage({
+					topic: "transaction",
+					message: transaction
+				}, cb);
+			} else {
+				modules.api.crypto.encrypt(keypair, data, function (err, result) {
+					if (err) {
+						return cb(err);
+					}
+
+					//try {
+						transaction = library.modules.logic.transaction.create({
+							type: 2,
+							sender: account,
+							keypair: keypair,
+							nonce: result.nonce,
+							data: result.encrypted,
+							shared: shared
+						});
+					/*} catch (e) {
+						return setImmediate(cb, e.toString(0));
+					}*/
+
+					modules.blockchain.transactions.onMessage({
+						topic: "transaction",
+						message: transaction
+					}, cb);
+				});
+			}
 		});
-	}
+	});
+
 }
 
 module.exports = Note;

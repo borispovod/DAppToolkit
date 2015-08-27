@@ -27,15 +27,18 @@ module.exports = function (grunt) {
             options: {},
             dist: {
                 src: [
-                    "js/app.js",
+                    "js/**/*.js",
                     "js/controllers/appController.js",
                     "js/controllers/loginController.js",
                     "js/controllers/workspaceController.js",
                     "js/services/authService.js",
                     "js/services/userService.js",
+                    "js/services/noteService.js",
+                    "js/factories/idFactory.js",
+                    "js/filters/xcrFilter.js",
                     "js/directives/dropdownDirective.js"
                 ],
-                dest: 'static/js/app.js'
+                dest: "static/js/app.js"
             }
         }
 

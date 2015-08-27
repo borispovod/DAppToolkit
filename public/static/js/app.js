@@ -50,18 +50,17 @@ angular.module('encryptiApp').controller('appController', [
 angular.module('encryptiApp').controller('loginController', ['authService', 'userService', '$scope',
     function (authService, userService, $scope) {
         $scope.pass = "";
-        $scope.login = function(pass){
-            if (pass.trim()!=""){
-                authService.setLogged();
-                userService.setUser(pass.trim());
+        $scope.login = function(pass) {
+            if (pass.trim() != ""){
+                authService.setLogged(pass);
             }
         }
     }]);
-angular.module('encryptiApp').controller('workspaceController', ['userService', '$scope',
-    function (userService, $scope) {
+angular.module('encryptiApp').controller('workspaceController', ['userService', 'authService', 'noteService', '$scope',
+    function (userService, authService, noteService, $scope) {
 
         $scope.note = {
-            list: [{title: 'test1', id: 1}, {title: 'test2', id: 2}],
+            list: [],
             currentNote: {
                 title: 'You don`t have a text file yet, you should add one. :)',
                 text: 'How to add your own text file:\n' +
@@ -85,37 +84,32 @@ angular.module('encryptiApp').controller('workspaceController', ['userService', 
                 this.currentNote = {title: '', text: '', editable: true}
             },
             share: function () {
-                //sharing code for this.currentNote here
+                noteService.save(this.currentNote, function (err) {
+                    if (err) {
+                        alert(err);
+                    }
+                });
+            },
+            encrypt: function () {
+                noteService.encrypt(this.currentNote, function (err) {
+                    if (err) {
+                        alert(err);
+                    }
+                })
             }
         };
 
-        $scope.userData = userService;
+        $scope.userData = userService.user;
 
         if ($scope.note.list.length > 0) {
             $scope.note.load($scope.note.list[0]);
         }
 
+        $scope.logout = function () {
+            authService.setUnlogged();
+        }
+
     }]);
-
-
-angular.module('encryptiApp').service('authService', ['$state', function ($state) {
-
-	this.setLogged = function () {
-		this.isLogged = true;
-		$state.go('main.workspace');
-	}
-
-	this.setUnlogged = function () {
-		this.isLogged = false;
-		$state.go('main.login');
-	}
-}]);
-angular.module('encryptiApp').service('userService', [function () {
-
-    this.setUser = function (user) {
-        this.user = user;
-    }
-}]);
 angular.module('encryptiApp').directive("dropdown", function ($rootScope, authService) {
     return {
         restrict: "E",
@@ -153,3 +147,73 @@ angular.module('encryptiApp').directive("dropdown", function ($rootScope, authSe
         }
     }
 });
+
+angular.module('encryptiApp').factory('idFactory', ['$location',  function ($location) {
+	var url = $location.absUrl();
+	var parts = url.split('/');
+	var dappId = parts[parts.indexOf('dapps') + 1];
+	return dappId;
+}]);
+angular.module('encryptiApp').filter('xcrFilter', function () {
+	return function (value) {
+		return value / 100000000;
+	}
+});
+angular.module('encryptiApp').service('authService', ['$state', 'idFactory', '$http', 'userService', function ($state, idFactory, $http, userService) {
+	this.setLogged = function (secret) {
+		$http.post('/api/dapps/' + idFactory + '/api/openAccount', {
+			secret: secret
+		}).then(function (resp) {
+			if (resp.data.success) {
+				var user = resp.data.response.account;
+				user.secret = secret;
+
+				userService.setUser(user);
+
+				this.isLogged = true;
+				$state.go('main.workspace');
+			}
+		}.bind(this));
+	}
+
+	this.setUnlogged = function () {
+		userService.clearUser();
+		this.isLogged = false;
+		$state.go('main.login');
+	}
+}]);
+angular.module('encryptiApp').service('noteService', ['$http', 'idFactory', 'userService', function ($http, idFactory, userService) {
+	function saveNote(note, cb) {
+		$http.post('/api/dapps/' + idFactory + '/api/note/encrypt', {
+			secret: userService.user.secret,
+			data: note.text,
+			shared: note.shared
+		}).then(function (resp) {
+			cb(resp.data);
+		});
+	}
+
+	this.save = function (note, cb) {
+		note.shared = 1;
+		saveNote(note, function (resp) {
+			cb(resp.error);
+		});
+	}
+
+	this.encrypt = function (note, cb) {
+		note.shared = 0;
+		saveNote(note, function (resp) {
+			cb(resp.error);
+		});
+	}
+
+}]);
+angular.module('encryptiApp').service('userService', [function () {
+    this.setUser = function (user) {
+        this.user = user;
+    }
+
+    this.clearUser = function () {
+        delete this.user;
+    }
+}]);

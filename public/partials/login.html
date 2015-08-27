@@ -17,7 +17,7 @@
 <div class="right_panel">
     <div class="header" style="position: relative;">
         <form ng-submit="login(pass)" style="height: 100%;">
-            <input ng-model="pass" type="password" class="password_input"
+            <input minlength="1" maxlength="100" ng-model="pass" type="password" class="password_input"
                    placeholder="Please input your passphrase here.."/>
             <input type="submit" id="submit" value="Submit" hidden/>
         </form>

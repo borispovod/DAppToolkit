@@ -367,7 +367,7 @@ Blocks.prototype.getBlock = function (cb, query) {
 		fields: ["id", "pointId", "pointHeight", "delegate", "signature", "count"],
 		map: ["id", "pointId", "pointHeight", "delegate", "signature", "count"]
 	}, cb);
-}пш
+}
 
 Blocks.prototype.getBlocks = function (cb, query) {
 	modules.api.sql.select({

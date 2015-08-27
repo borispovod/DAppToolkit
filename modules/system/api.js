@@ -32,6 +32,8 @@ Api.prototype.onBlockchainLoaded = function () {
 		library.logger("failed router file");
 	}
 
+	console.log(modules);
+
 	router.forEach(function (route) {
 		private.apies[route.method + " " + route.path] = private.ns(modules, route.handler);
 	});

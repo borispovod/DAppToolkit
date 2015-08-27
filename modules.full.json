@@ -21,5 +21,6 @@
 	"system/background": "./modules/system/background.js",
 	"system/api": "./modules/system/api.js",
 	"assets/insidetransfer": "./modules/assets/insidetransfer.js",
-	"assets/outsidetransfer": "./modules/assets/outsidetransfer.js"
+	"assets/outsidetransfer": "./modules/assets/outsidetransfer.js",
+  	"assets/note": "./modules/assets/note.js"
 }
