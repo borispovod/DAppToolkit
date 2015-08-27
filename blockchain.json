@@ -122,7 +122,7 @@
 	  },
 	  {
 		"name": "shared",
-		"type": "Int"
+		"type": "BigInt"
 	  },
 	  {
 		"name": "transactionId",

@@ -367,7 +367,7 @@ Blocks.prototype.getBlock = function (cb, query) {
 		fields: ["id", "pointId", "pointHeight", "delegate", "signature", "count"],
 		map: ["id", "pointId", "pointHeight", "delegate", "signature", "count"]
 	}, cb);
-}
+}пш
 
 Blocks.prototype.getBlocks = function (cb, query) {
 	modules.api.sql.select({
@@ -383,6 +383,11 @@ Blocks.prototype.getBlocks = function (cb, query) {
 			table: 'asset_dapptransfer',
 			alias: "t_dt",
 			on: {"t.id": "t_dt.transactionId"}
+		}, {
+			type: 'left outer',
+			table: 'asset_notes',
+			alias: 'n',
+			on: {'t.id': 'n.transactionId'}
 		}],
 		limit: query.limit,
 		offset: query.offset,
