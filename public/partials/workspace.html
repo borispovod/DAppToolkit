@@ -13,7 +13,7 @@
                 ng-repeat="($index, item) in note.list track by $index">
                 <i ng-if="note.currentNote.id==item.id" class="fa fa-eye" style="
     margin-right: 10px;
-"></i>{{item.title}}
+"></i>{{item.title || item.id}}
             </li>
         </ul>
     </div>

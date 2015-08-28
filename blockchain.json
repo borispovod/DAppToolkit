@@ -111,6 +111,11 @@
 	"type": "table",
 	"tableFields": [
 	  {
+		"name": "title",
+		"type": "String",
+		"length": 100
+	  },
+	  {
 		"name": "data",
 		"type": "Binary",
 		"length": 2048
