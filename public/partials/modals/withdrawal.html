@@ -1,0 +1,25 @@
+<form style="height: 100%;" ng-submit="send()">
+    <div class="modal-header">
+        <h3 class="modal-title">Withdrawal</h3>
+    </div>
+    <div class="modal-header-border"></div>
+    <div class="modal-body" style="height: calc(100% - (224px));">
+        <div class="input_group">
+            <label>Amount:</label>
+            <input name="amount" ng-model="data.amount" type="text"
+                   class="modal_input"
+                   placeholder="Amount to withdrawal.."/>
+        </div>
+
+        <div ng-if="error" class="error_wrapper">
+            <div class="error_text"><i class="fa fa-exclamation-triangle"></i> {{error}}
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <div class="buttons">
+            <input class="btn" type="button" ng-click="send()" value="SEND"/>
+            <input class="btn" type="button" ng-click="cancel()" value="CANCEL"/></div>
+    </div>
+    <input type="submit" id="submit" value="Submit" hidden/>
+</form>

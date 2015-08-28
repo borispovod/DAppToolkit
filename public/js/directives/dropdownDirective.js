@@ -1,4 +1,4 @@
-angular.module('encryptiApp').directive("dropdown", function ($rootScope, authService) {
+angular.module('encryptiApp').directive("dropdown", function ($rootScope, authService, $state) {
     return {
         restrict: "E",
         templateUrl: "partials/dropdown.html",
@@ -11,6 +11,13 @@ angular.module('encryptiApp').directive("dropdown", function ($rootScope, authSe
         },
         link: function (scope) {
 
+            scope.deposit = function () {
+                $state.go('main.workspace.deposit');
+            }
+
+            scope.withdrawal = function () {
+                $state.go('main.workspace.withdrawal');
+            }
             scope.auth = authService;
 
             scope.listVisible = false;

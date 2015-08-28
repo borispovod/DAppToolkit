@@ -1,4 +1,4 @@
-encryptiApp = angular.module('encryptiApp', ['ui.router']);
+encryptiApp = angular.module('encryptiApp', ['ui.router', 'ui.bootstrap']);
 
 encryptiApp.config([
     "$locationProvider",
@@ -21,6 +21,27 @@ encryptiApp.config([
                 url: "/workspace",
                 templateUrl: "partials/workspace.html",
                 controller: "workspaceController"
+            }).state('main.workspace.deposit', {
+                url: "/deposit",
+                onEnter: ['$stateParams', '$state', '$modal', function ($stateParams, $state, $modal) {
+                    $modal.open({
+                        templateUrl: "partials/modals/deposit.html",
+                        controller: "depositModalController"
+                    }).result.finally(function () {
+                            $state.go('^');
+                        });
+                }]
+            })
+            .state('main.workspace.withdrawal', {
+                url: "/withdrawal",
+                onEnter: ['$stateParams', '$state', '$modal', function ($stateParams, $state, $modal) {
+                    $modal.open({
+                        templateUrl: "partials/modals/withdrawal.html",
+                        controller: "withdrawalModalController"
+                    }).result.finally(function () {
+                            $state.go('^');
+                        });
+                }]
             })
 
     }
