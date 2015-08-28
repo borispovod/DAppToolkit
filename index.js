@@ -62,6 +62,25 @@ d.run(function () {
 		}],
 
 		validator: function (cb) {
+			ZSchema.registerFormat('publicKey', function (value) {
+				try {
+					var b = new Buffer(value, 'hex');
+					return b.length == 32;
+				} catch (e) {
+					return false;
+				}
+			});
+
+			ZSchema.registerFormat('hex', function (value) {
+				try {
+					new Buffer(value, 'hex');
+				} catch (e) {
+					return false;
+				}
+
+				return true;
+			});
+
 			var validator = new ZSchema();
 			cb(null, validator);
 		},

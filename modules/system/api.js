@@ -32,13 +32,12 @@ Api.prototype.onBlockchainLoaded = function () {
 		library.logger("failed router file");
 	}
 
-	console.log(modules);
-
 	router.forEach(function (route) {
 		private.apies[route.method + " " + route.path] = private.ns(modules, route.handler);
 	});
 
 	library.sandbox.onMessage(function (message, cb) {
+		console.log("message", message);
 		var handler = private.apies[message.method + " " + message.path];
 		if (handler) {
 			handler(function (err, response) {

@@ -1,6 +1,8 @@
 var private = {}, self = null,
 	library = null, modules = null;
 
+private.unconfirmedNotes = {};
+
 function Note(cb, _library) {
 	self = this;
 	library = _library;
@@ -9,6 +11,10 @@ function Note(cb, _library) {
 
 Note.prototype.create = function (data, trs) {
 	trs.data = data.data;
+
+	if (data.title) {
+		trs.title = data.title;
+	}
 
 	if (data.nonce) {
 		trs.nonce = data.nonce;
@@ -32,6 +38,10 @@ Note.prototype.verify = function (trs, sender, cb) {
 		return cb("Max size of encrypted data is 2048 byte, please, reduce your data");
 	}
 
+	if (trs.title && trs.title.length > 100) {
+		return cb("Max size of title is 100 characters, please, reduce title");
+	}
+
 	cb(null, trs);
 }
 
@@ -40,23 +50,45 @@ Note.prototype.process = function (trs, sender, cb) {
 }
 
 Note.prototype.getBytes = function (trs) {
-	return Buffer.concat([new Buffer(trs.data, 'hex'), new Buffer(trs.nonce, 'hex')]);
+	var b = Buffer.concat([new Buffer(trs.data, 'hex'), new Buffer(trs.nonce, 'hex')]);
+
+	if (trs.title) {
+		b = Buffer.concat([new Buffer(trs.title, 'hex'), b]);
+	}
+
+	return b;
 }
 
 Note.prototype.apply = function (trs, sender, cb) {
-	setImmediate(cb);
+	modules.blockchain.accounts.mergeAccountAndGet({
+		address: sender.address,
+		balance: sender.balance - trs.fee
+	}, cb);
 }
 
 Note.prototype.undo = function (trs, sender, cb) {
-	setImmediate(cb);
+	modules.blockchain.accounts.undoMerging({
+		address: sender.address,
+		balance: sender.balance + trs.fee
+	}, cb);
 }
 
 Note.prototype.applyUnconfirmed = function (trs, sender, cb) {
-	setImmediate(cb);
+	if (!sender.u_balance || sender.u_balance < trs.fee) {
+		return setImmediate(cb, "Sender don't have enough amount");
+	}
+
+	modules.blockchain.accounts.mergeAccountAndGet({
+		address: sender.address,
+		u_balance: sender.balance - trs.fee
+	}, cb);
 }
 
 Note.prototype.undoUnconfirmed = function (trs, sender, cb) {
-	setImmediate(cb);
+	modules.blockchain.accounts.undoMerging({
+		address: sender.address,
+		u_balance: sender.balance + trs.fee
+	}, cb);
 }
 
 Note.prototype.save = function (trs, cb) {
@@ -90,11 +122,119 @@ Note.prototype.onBind = function (_modules) {
 	modules.logic.transaction.attachAssetType(2, self);
 }
 
+Note.prototype.list = function (cb, query) {
+	// list of notes
+	library.validator.validate(query, {
+		type: "object",
+		properties: {
+			publicKey: {
+				type: "string",
+				format: "publicKey"
+			}
+		}
+	}, function (err) {
+		if (err) {
+			return cb(err[0].message);
+		}
+
+		modules.api.sql.select({
+			table: "transactions",
+			alias: "t",
+			condition: {
+				senderPublicKey: query.publicKey
+			},
+			join: [{
+				type: 'left outer',
+				table: 'asset_notes',
+				alias: "n",
+				on: {"t.id": "n.transactionId"}
+			}],
+			map: ['id', 'type', 'senderId', 'senderPublicKey', 'recipientId', 'amount', 'fee', 'signature', 'blockId', 'title', 'data', 'nonce', 'shared', 'transactionId']
+		}, function (err, notes) {
+			if (err) {
+				return cb(err.toString());
+			}
+
+			// get unconfirmed transactions and push to notes
+			modules.blockchain.transactions.getUnconfirmedTransactionList(true, function (err, transactions) {
+				if (err) {
+					return cb(err.toString());
+				}
+
+				var unconfirmedNotes = transactions.filter(function (tx) {
+					return tx.senderPublicKey == query.publicKey && tx.type == 2;
+				});
+
+				return cb(null, {success: true, notes: unconfirmedNotes.concat(notes)});
+			});
+		});
+	})
+}
+
+Note.prototype.get = function (cb, query) {
+	library.validator.validate(query, {
+		type: "object",
+		properties: {
+			id: {
+				type: "string",
+				minLength: 1
+			}
+		},
+		required: ["id"]
+	}, function (err) {
+		if (err) {
+			return cb(err[0].message);
+		}
+
+		modules.api.sql.select({
+			table: "transactions",
+			alias: "t",
+			condition: {
+				id: query.id
+			},
+			join: [{
+				type: 'left outer',
+				table: 'asset_notes',
+				alias: "n",
+				on: {"t.id": "n.transactionId"}
+			}]
+		}, function (err, notes) {
+			if (err) {
+				return cb(err);
+			}
+
+			if (notes.length == 0) {
+				modules.blockchain.transactions.getUnconfirmedTransactionList(function (transactions) {
+					var note = transactions.find(function (tx) {
+						return tx.id == query.id;
+					});
+
+					return cb(null, {
+						success: true,
+						note: note
+					});
+				});
+			} else {
+				var note = notes[0];
+				return cb(null, {
+					success: true,
+					note: note
+				});
+			}
+		});
+	})
+}
+
 Note.prototype.encrypt = function (cb, query) {
 	library.validator.validate(query, {
 		type: "object",
 		properties: {
 			secret: {
+				type: "string",
+				minLength: 1,
+				maxLength: 100
+			},
+			title: {
 				type: "string",
 				minLength: 1,
 				maxLength: 100
@@ -156,7 +296,7 @@ Note.prototype.encrypt = function (cb, query) {
 						return cb(err);
 					}
 
-					//try {
+					try {
 						transaction = library.modules.logic.transaction.create({
 							type: 2,
 							sender: account,
@@ -165,9 +305,9 @@ Note.prototype.encrypt = function (cb, query) {
 							data: result.encrypted,
 							shared: shared
 						});
-					/*} catch (e) {
+					} catch (e) {
 						return setImmediate(cb, e.toString(0));
-					}*/
+					}
 
 					modules.blockchain.transactions.onMessage({
 						topic: "transaction",

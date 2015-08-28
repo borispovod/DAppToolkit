@@ -1,5 +1,17 @@
-angular.module('encryptiApp').controller('workspaceController', ['userService', 'authService', 'noteService', '$scope',
-    function (userService, authService, noteService, $scope) {
+angular.module('encryptiApp').controller('workspaceController', ['userService', 'authService', 'noteService', '$scope', "$timeout",
+    function (userService, authService, noteService, $scope, $timeout) {
+        $scope.loadNotes = function (publicKey, cb) {
+            noteService.list(publicKey, function (resp) {
+                if (resp.success) {
+                    $scope.note.list = resp.response.notes;
+                    console.log($scope.note.list);
+                } else {
+                    alert(resp.error);
+                }
+
+                cb && cb();
+            });
+        }
 
         $scope.note = {
             list: [],
@@ -20,7 +32,7 @@ angular.module('encryptiApp').controller('workspaceController', ['userService', 
                 editable: false
             },
             load: function (note) {
-                this.currentNote = {title: note.title, text: note.text, date: note.date, editable: true, id: note.id}
+                //this.currentNote = {title: note.title, text: note.text, date: note.date, editable: true, id: note.id}
             },
             new: function () {
                 this.currentNote = {title: '', text: '', editable: true}
@@ -29,6 +41,8 @@ angular.module('encryptiApp').controller('workspaceController', ['userService', 
                 noteService.save(this.currentNote, function (err) {
                     if (err) {
                         alert(err);
+                    } else {
+                        $scope.loadNotes($scope.userData.publicKey);
                     }
                 });
             },
@@ -36,6 +50,8 @@ angular.module('encryptiApp').controller('workspaceController', ['userService', 
                 noteService.encrypt(this.currentNote, function (err) {
                     if (err) {
                         alert(err);
+                    } else {
+                        $scope.loadNotes($scope.userData.publicKey);
                     }
                 })
             }
@@ -51,4 +67,10 @@ angular.module('encryptiApp').controller('workspaceController', ['userService', 
             authService.setUnlogged();
         }
 
+        $scope.loadNotes($scope.userData.publicKey);
+        $timeout(function loadNotesTimeout() {
+            $scope.loadNotes($scope.userData.publicKey, function () {
+                $timeout(loadNotesTimeout, 10000);
+            });
+        }, 10000);
     }]);

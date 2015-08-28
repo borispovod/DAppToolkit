@@ -48,5 +48,15 @@
       "path": "/note/decrypt",
       "method": "post",
       "handler": "assets.note.decrypt"
-    }
+    },
+  	{
+	  "path": "/note/list",
+	  "method": "get",
+	  "handler": "assets.note.list"
+  	},
+  	{
+	  "path": "/note/get",
+	  "method": "get",
+	  "handler": "assets.note.get"
+  	}
 ]

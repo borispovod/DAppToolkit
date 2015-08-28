@@ -23,4 +23,24 @@ angular.module('encryptiApp').service('noteService', ['$http', 'idFactory', 'use
 		});
 	}
 
+	this.list = function (publicKey, cb) {
+		$http.get('/api/dapps/' + idFactory + '/api/note/list', {
+			publicKey: publicKey
+		}).then(function (resp) {
+			cb(resp.data);
+		});
+	}
+
+	this.get = function (id, cb) {
+		$http.get("/api/dapps/" + idFactory + "/api/note/get", {
+			id: id
+		}).then(function (resp) {
+			cb(resp.data);
+		});
+	}
+
+	this.decrypt = function (id, secret, cb) {
+		// decrypt text
+	}
+
 }]);
