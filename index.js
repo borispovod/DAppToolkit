@@ -28,7 +28,6 @@ d.run(function () {
 		},
 
 		scheme: ['logger', function (cb, scope) {
-
 			try {
 				var db = require('./blockchain.json');
 			} catch (e) {
@@ -58,6 +57,7 @@ d.run(function () {
 					fields.push(db[i].alias + "." + db[i].tableFields[n].name);
 					alias[db[i].alias + "_" + db[i].tableFields[n].name] = getType(db[i].tableFields[n].type);
 				}
+
 				selector[db[i].table] = extend(db[i], {tableFields: undefined});
 			}
 
@@ -161,6 +161,7 @@ d.run(function () {
 					});
 				});
 			})
+
 			async.parallel(tasks, function (err) {
 				cb(err, modules);
 			});

@@ -56,9 +56,17 @@
 				"table": "asset_dapptransfer",
 				"alias": "t_dt",
 				"on": {
-					"t.id": "t_dt.transactionId"
+					"t_dt.transactionId": "t.id"
 				}
-			}
+			},
+		  	{
+			  "type": "left outer",
+			  "table": "asset_notes",
+			  "alias": "n",
+			  "on": {
+				"n.transactionId": "t.id"
+			  }
+		  	}
 		]
 	},
 	{

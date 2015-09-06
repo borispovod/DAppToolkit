@@ -30,6 +30,7 @@ private.readDbRows = function (rows) {
 	var order = [];
 	for (var i = 0, length = rows.length; i < length; i++) {
 		var __block = modules.logic.block.dbRead(rows[i]);
+		console.log(__block);
 		if (__block) {
 			if (!blocks[__block.id]) {
 				order.push(__block.id);
@@ -507,7 +508,6 @@ Blocks.prototype.getBlock = function (cb, query) {
 		condition: query,
 		fields: library.scheme.fields
 	}), library.scheme.alias, function (err, rows) {
-		console.log(err, rows)
 		if (err) {
 			return cb(err);
 		}
