@@ -15,7 +15,7 @@ function Block(cb, _library) {
 
 //public methods
 Block.prototype.getBytes = function (block, withSignature) {
-	var size = 8 + 32 + 8 + 4 + 4;
+	var size = 8 + 4 + 32 + 8 + 4 + 4;
 
 	if (withSignature && block.signature) {
 		size = size + 64; //TODO: check size
@@ -34,6 +34,8 @@ Block.prototype.getBytes = function (block, withSignature) {
 		}
 	}
 
+	bb.writeInt(block.height);
+
 	var pb = new Buffer(block.delegate, 'hex');
 	for (var i = 0; i < pb.length; i++) {
 		bb.writeByte(pb[i]);
@@ -50,7 +52,6 @@ Block.prototype.getBytes = function (block, withSignature) {
 
 	if (withSignature && block.signature) {
 		var pb = new Buffer(block.signature, 'hex');
-		console.log("size", pb.length)
 		for (var i = 0; i < pb.length; i++) {
 			bb.writeByte(pb[i]);
 		}
@@ -79,6 +80,7 @@ Block.prototype.save = function (block, cb) {
 		table: "blocks",
 		values: {
 			id: block.id,
+			height: block.height,
 			prevBlockId: block.prevBlockId,
 			pointId: block.pointId,
 			pointHeight: block.pointHeight,
@@ -86,19 +88,13 @@ Block.prototype.save = function (block, cb) {
 			signature: block.signature,
 			count: block.count
 		}
-	}, function (err) {
-		if (!err) {
-			private.lastBlock = block;
-			modules.api.transport.message("block", block, cb);
-		} else {
-			setImmediate(cb);
-		}
-	});
+	}, cb);
 }
 
 Block.prototype.dbRead = function (row) {
 	return {
 		id: row.b_id,
+		height: row.b_height,
 		prevBlockId: row.b_prevBlockId,
 		pointId: row.b_pointId,
 		pointHeight: row.b_pointHeight,

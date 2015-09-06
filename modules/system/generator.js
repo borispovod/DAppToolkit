@@ -16,6 +16,11 @@ Generator.prototype.onBind = function (_modules) {
 		}
 
 		var executor = modules.blockchain.accounts.getExecutor();
+
+		if (!executor) {
+			return library.logger("secret is null")
+		}
+
 		if (res.authorId == executor.address) {
 
 		}
@@ -25,6 +30,7 @@ Generator.prototype.onBind = function (_modules) {
 
 		var genesisBlock = {
 			delegate: executor.keypair.publicKey,
+			height: 1,
 			pointId: res.pointId,
 			pointHeight: res.pointHeight,
 			count: 0,

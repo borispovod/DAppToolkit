@@ -2,6 +2,7 @@ var crypto = require('crypto-browserify');
 var path = require('path');
 var async = require('async');
 var util = require('util');
+var extend = require('extend');
 
 var private = {}, self = null,
 	library = null, modules = null;
@@ -22,57 +23,6 @@ function Blocks(cb, _library) {
 	private.lastBlock = private.genesisBlock;
 
 	cb(null, self);
-}
-
-private.row2object = function (row) {
-	for (var
-			 out = {},
-			 length = this.length,
-			 i = 0; i < length; i++
-	) {
-		out[this[i]] = row[i];
-	}
-	return out;
-}
-
-private.row2parsed = function (row) {
-	for (var
-			 out = {},
-			 fields = this.f,
-			 parsers = this.p,
-			 length = fields.length,
-			 i = 0; i < length; i++
-	) {
-		if (parsers[i] === Buffer) {
-			out[fields[i]] = parsers[i](row[i], 'hex');
-		} else if (parsers[i] === Array) {
-			out[fields[i]] = row[i] ? row[i].split(",") : []
-		} else {
-			out[fields[i]] = parsers[i](row[i]);
-		}
-	}
-	return out;
-}
-
-private.parseFields = function ($fields) {
-	for (var
-			 current,
-			 fields = Object.keys($fields),
-			 parsers = [],
-			 length = fields.length,
-			 i = 0; i < length; i++
-	) {
-		current = $fields[fields[i]];
-		parsers[i] = current === Boolean ?
-			$Boolean : (
-			current === Date ?
-				$Date :
-			current || String
-		)
-		;
-	}
-
-	return {f: fields, p: parsers};
 }
 
 private.readDbRows = function (rows) {
@@ -106,7 +56,10 @@ private.readDbRows = function (rows) {
 	return blocks;
 }
 
-private.saveBlock = function (block, cb) {
+private.saveBlock = function (block, cb, scope) {
+	if (scope) {
+		return setImmediate(cb)
+	}
 	modules.logic.block.save(block, function (err) {
 		async.eachSeries(block.transactions, function (trs, cb) {
 			modules.logic.transaction.save(trs, cb);
@@ -114,8 +67,46 @@ private.saveBlock = function (block, cb) {
 	});
 }
 
-private.verify = function (block, cb) {
-	if (private.lastBlock.id == private.genesisBlock.id) {
+private.deleteBlock = function (blockId, cb) {
+	modules.api.sql.remove({
+		table: 'blocks',
+		condition: {
+			id: blockId
+		}
+	}, cb);
+}
+
+private.popLastBlock = function (oldLastBlock, cb) {
+	self.getBlock({id: oldLastBlock.previousBlock}, function (err, previousBlock) {
+		if (err || !previousBlock) {
+			return cb(err || 'previousBlock is null');
+		}
+
+		async.eachSeries(oldLastBlock.transactions.reverse(), function (transaction, cb) {
+			async.series([
+				function (cb) {
+					modules.transactions.undo(transaction, cb);
+				}, function (cb) {
+					modules.transactions.undoUnconfirmed(transaction, cb);
+				}, function (cb) {
+					modules.transactions.pushHiddenTransaction(transaction);
+					setImmediate(cb);
+				}
+			], cb);
+		}, function (err) {
+			private.deleteBlock(oldLastBlock.id, function (err) {
+				if (err) {
+					return cb(err);
+				}
+
+				cb(null, previousBlock);
+			});
+		});
+	});
+}
+
+private.verify = function (block, cb, scope) {
+	if ((scope || private).lastBlock.id == (scope || private).genesisBlock.id) {
 		try {
 			var valid = modules.logic.block.verifySignature(block);
 		} catch (e) {
@@ -126,45 +117,98 @@ private.verify = function (block, cb) {
 		}
 		return cb();
 	} else {
-		if (private.lastBlock.id != block.prevBlockId) {
+		if ((scope || private).lastBlock.id != block.prevBlockId) {
 			return cb("wrong prev block");
 		}
 	}
-	modules.api.blocks.getBlock(block.pointId, function (err, data) {
-		if (err) {
-			cb(err);
+	modules.api.sql.select({
+		table: "blocks",
+		condition: {
+			id: block.pointId
+		},
+		fields: ["id"]
+	}, function (err, found) {
+		if (err || found.length) {
+			return cb("wrong block");
 		}
-		var cryptiBlock = data.block;
-		modules.api.sql.select({
-			table: "blocks",
-			condition: {
-				id: block.id
-			},
-			fields: ["id"]
-		}, function (err, found) {
-			if (err || found.length) {
-				return cb("wrong block");
-			}
-			try {
-				var valid = modules.logic.block.verifySignature(block);
-			} catch (e) {
-				return cb(e.toString());
-			}
-			if (!valid) {
-				return cb("wrong block");
-			}
-			return cb();
-		});
-	})
+		try {
+			var valid = modules.logic.block.verifySignature(block);
+		} catch (e) {
+			return cb(e.toString());
+		}
+		if (!valid) {
+			return cb("wrong block");
+		}
+		return cb();
+	});
+}
+
+private.getIdSequence = function (height, cb) {
+	modules.api.sql.select({
+		query: {
+			type: 'union',
+			unionqueries: [{
+				table: 'blocks',
+				fields: [{id: "id"}, {expression: "max(height)", alias: "height"}],
+				group: {
+					expression: "(cast(height / 101 as integer) + (case when height % 101 > 0 then 1 else 0 end))",
+					having: {
+						height: {$lte: height}
+					}
+				}
+			}, {
+				table: 'blocks',
+				condition: {
+					height: 1
+				},
+				fields: [{id: "id"}, {expression: "1", alias: "height"}],
+				sort: {
+					height: -1
+				}
+			}],
+			limit: 1000
+		},
+		alias: "s",
+		fields: [{height: "height"}, {expression: "group_concat(s.id)", alias: "ids"}]
+	}, {height: Number, ids: Array}, function (err, rows) {
+		if (err || !rows.length) {
+			return (err || "wrong ids request")
+		}
+		cb(null, rows[0]);
+	});
+}
+
+Blocks.prototype.deleteBlocksBefore = function (block, cb) {
+	async.whilst(
+		function () {
+			return !(block.height >= private.lastBlock.height)
+		},
+		function (next) {
+			private.popLastBlock(private.lastBlock, function (err, newLastBlock) {
+				private.lastBlock = newLastBlock;
+				next(err);
+			});
+		},
+		function (err) {
+			setImmediate(cb, err);
+		}
+	);
+}
+
+Blocks.prototype.saveBlocks = function (blocks, cb) {
+	async.eachSeries(blocks, function(block, cb){
+		private.saveBlock(block, cb);
+	}, cb);
 }
 
 Blocks.prototype.genesisBlock = function () {
 	return private.genesisBlock;
 }
 
-Blocks.prototype.processBlock = function (block, cb) {
+Blocks.prototype.processBlock = function (block, cb, scope) {
 	private.verify(block, function (err) {
 		if (err) {
+			console.log('here!');
 			return cb(err);
 		}
 
@@ -174,9 +218,15 @@ Blocks.prototype.processBlock = function (block, cb) {
 			}
 
 			function done(err) {
+				if (!err) {
+					(scope || private).lastBlock = block;
+					!scope && modules.api.transport.message("block", block, function () {
+
+					});
+				}
 				modules.blockchain.transactions.applyUnconfirmedTransactionList(unconfirmedTransactions, function () {
 					setImmediate(cb, err);
-				});
+				}, scope);
 			}
 
 			var payloadHash = crypto.createHash('sha256'), appliedTransactions = {};
@@ -209,12 +259,12 @@ Blocks.prototype.processBlock = function (block, cb) {
 					payloadHash.update(bytes);
 
 					setImmediate(cb);
-				});
+				}, scope);
 			}, function (err) {
 				if (err) {
 					async.eachSeries(block.transactions, function (transaction, cb) {
 						if (appliedTransactions[transaction.id]) {
-							modules.blockchain.transactions.undoUnconfirmedTransaction(transaction, cb);
+							modules.blockchain.transactions.undoUnconfirmedTransaction(transaction, cb, scope);
 						} else {
 							setImmediate(cb);
 						}
@@ -227,20 +277,19 @@ Blocks.prototype.processBlock = function (block, cb) {
 							if (err) {
 								library.logger("Can't apply transactions: " + transaction.id);
 							}
-							modules.blockchain.transactions.removeUnconfirmedTransaction(transaction.id);
+							modules.blockchain.transactions.removeUnconfirmedTransaction(transaction.id, scope);
 							setImmediate(cb);
-						});
+						}, scope);
 					}, function (err) {
-						private.lastBlock = block;
-						private.saveBlock(block, done);
+						private.saveBlock(block, done, scope);
 					});
 				}
 			});
-		});
+		}, scope);
 	});
 }
 
-Blocks.prototype.createBlock = function (executor, point, cb) {
+Blocks.prototype.createBlock = function (executor, point, cb, scope) {
 	modules.blockchain.transactions.getUnconfirmedTransactionList(false, function (err, unconfirmedList) {
 		var ready = [];
 
@@ -254,10 +303,11 @@ Blocks.prototype.createBlock = function (executor, point, cb) {
 					ready.push(transaction);
 					cb();
 				});
-			});
+			}, scope);
 		}, function () {
 			var blockObj = {
 				delegate: executor.keypair.publicKey,
+				height: private.lastBlock.height + 1,
 				prevBlockId: private.lastBlock.id,
 				pointId: point.id,
 				pointHeight: point.height,
@@ -272,6 +322,74 @@ Blocks.prototype.createBlock = function (executor, point, cb) {
 
 			self.processBlock(blockObj, cb);
 		});
+	}, scope);
+}
+
+Blocks.prototype.applyBlocks = function (blocks, cb, scope) {
+	async.eachSeries(blocks, function (block, cb) {
+		try {
+			var valid = modules.logic.block.verifySignature(block);
+		} catch (e) {
+			return setImmediate(cb, {
+				message: e.toString(),
+				block: block
+			});
+		}
+		if (!valid) {
+			return setImmediate(cb, {
+				message: "Can't verify block signature",
+				block: block
+			});
+		}
+		(scope || private).lastBlock = block;
+		async.eachSeries(block.transactions, function (transaction, cb) {
+			modules.blockchain.accounts.setAccountAndGet({publicKey: transaction.senderPublicKey}, function (err, sender) {
+				if (err) {
+					return cb({
+						message: err,
+						transaction: transaction,
+						block: block
+					});
+				}
+				modules.logic.transaction.verify(transaction, sender, function (err) {
+					if (err) {
+						return setImmediate(cb, {
+							message: err,
+							transaction: transaction,
+							block: block
+						});
+					}
+
+					async.series([
+						function (cb) {
+							modules.blockchain.transactions.applyUnconfirmedTransaction(transaction, cb, scope);
+						},
+						function (cb) {
+							modules.blockchain.transactions.applyTransaction(transaction, cb, scope);
+						}
+					], cb)
+				});
+			}, scope);
+		}, cb);
+	}, function (err) {
+		cb(err, blocks);
+	});
+}
+
+Blocks.prototype.loadBlocksPeer = function (peer, cb, scope) {
+	modules.api.transport.getPeer(peer, "get", "/blocks/after", {lastBlockHeight: scope.lastBlock.height}, function (err, res) {
+		console.log("loading after", scope.lastBlock.height)
+		if (err || !res.body.success) {
+			return cb(err);
+		}
+
+		var blocks = private.readDbRows(res.body.response);
+
+		console.log(blocks.map(function (el) {
+			return el.height
+		}));
+
+		self.applyBlocks(blocks, cb, scope);
 	});
 }
 
@@ -281,65 +399,87 @@ Blocks.prototype.loadBlocksOffset = function (limit, offset, cb) {
 			return cb(err);
 		}
 
-		blocks = util.isArray(library.scheme.alias) ?
-			blocks.map(private.row2object, library.scheme.alias) :
-			blocks.map(private.row2parsed, private.parseFields(library.scheme.alias));
-
 		blocks = private.readDbRows(blocks);
 
-		async.eachSeries(blocks, function (block, cb) {
-			try {
-				var valid = modules.logic.block.verifySignature(block);
-			} catch (e) {
-				return setImmediate(cb, {
-					message: e.toString(),
-					block: block
-				});
-			}
-			if (!valid) {
-				return setImmediate(cb, {
-					message: "Can't verify block signature",
-					block: block
-				});
-			}
-			private.lastBlock = block;
-			async.eachSeries(block.transactions, function (transaction, cb) {
-				modules.blockchain.accounts.setAccountAndGet({publicKey: transaction.senderPublicKey}, function (err, sender) {
-					if (err) {
-						return cb({
-							message: err,
-							transaction: transaction,
-							block: block
-						});
-					}
-					modules.logic.transaction.verify(transaction, sender, function (err) {
-						if (err) {
-							return setImmediate(cb, {
-								message: err,
-								transaction: transaction,
-								block: block
-							});
-						}
-
-						async.series([
-							function (cb) {
-								modules.blockchain.transactions.applyUnconfirmedTransaction(transaction, cb);
-							},
-							function (cb) {
-								modules.blockchain.transactions.applyTransaction(transaction, cb);
-							}
-						], cb)
-					});
-				});
-			}, cb);
-		}, function (err) {
-			cb(err, blocks);
-		});
+		self.applyBlocks(blocks, cb);
 	}, {limit: limit, offset: offset})
 }
 
-Blocks.prototype.simpleDeleteAfterBlock = function (blockId, cb) {
-	setImmediate(cb);
+Blocks.prototype.findCommon = function (cb, query) {
+	modules.api.sql.select({
+		table: "blocks",
+		condition: {
+			id: {
+				$in: query.ids
+			},
+			height: {$between: [query.min, query.max]}
+		},
+		fields: [{expression: "max(height)", alias: "height"}, "id", "prevBlockId"]
+	}, {"height": Number, "id": String, "prevBlockId": String}, function (err, rows) {
+		if (err) {
+			return cb(err);
+		}
+
+		var commonBlock = rows.length ? rows[0] : null;
+		cb(null, commonBlock);
+	});
+}
+
+Blocks.prototype.getCommonBlock = function (height, peer, cb) {
+	var commonBlock = null;
+	var lastBlockHeight = height;
+	var count = 0;
+
+	async.whilst(
+		function () {
+			return !commonBlock && count < 30 && lastBlockHeight > 1;
+		},
+		function (next) {
+			count++;
+			private.getIdSequence(lastBlockHeight, function (err, data) {
+				if (err) {
+					return next(err);
+				}
+				var max = lastBlockHeight;
+				lastBlockHeight = data.height;
+				modules.api.transport.getPeer(peer, "get", "/blocks/common", {
+					ids: data.ids,
+					max: max,
+					min: lastBlockHeight
+				}, function (err, data) {
+					if (err || !data.body.success) {
+						return next(err);
+					}
+
+					if (!data.body.response) {
+						return next();
+					}
+
+					modules.api.sql.select({
+						table: "blocks",
+						condition: {
+							id: data.body.response.id,
+							height: data.body.response.height,
+							previousBlock: data.body.response.previousBlock
+						},
+						fields: [{expression: "count(id)", alias: "cnt"}]
+					}, {"cnt": Number}, function (err, rows) {
+						if (err || !rows.length) {
+							return next(err || "Can't compare blocks");
+						}
+
+						if (rows[0].cnt) {
+							commonBlock = data.body.response;
+						}
+						next();
+					});
+				});
+			});
+		},
+		function (err) {
+			setImmediate(cb, err, commonBlock);
+		}
+	)
 }
 
 Blocks.prototype.count = function (cb) {
@@ -355,54 +495,54 @@ Blocks.prototype.count = function (cb) {
 }
 
 Blocks.prototype.getHeight = function (cb) {
-	cb(null, private.lastBlock.pointHeight);
+	cb(null, private.lastBlock.height);
+}
+
+Blocks.prototype.getLastBlock = function (cb) {
+	cb(null, private.lastBlock);
 }
 
 Blocks.prototype.getBlock = function (cb, query) {
-	modules.api.sql.select({
-		table: "blocks",
-		condition: {
-			id: query.id
-		},
-		fields: ["id", "pointId", "pointHeight", "delegate", "signature", "count"],
-		map: ["id", "pointId", "pointHeight", "delegate", "signature", "count"]
-	}, cb);
+	modules.api.sql.select(extend(library.scheme.selector["blocks"], {
+		condition: query,
+		fields: library.scheme.fields
+	}), library.scheme.alias, function (err, rows) {
+		console.log(err, rows)
+		if (err) {
+			return cb(err);
+		}
+		cb(null, rows[0]);
+	});
 }
 
 Blocks.prototype.getBlocks = function (cb, query) {
-	modules.api.sql.select({
-		table: "blocks",
-		alias: "b",
-		join: [{
-			type: 'left outer',
-			table: 'transactions',
-			alias: "t",
-			on: {"b.id": "t.blockId"}
-		}, {
-			type: 'left outer',
-			table: 'asset_dapptransfer',
-			alias: "t_dt",
-			on: {"t.id": "t_dt.transactionId"}
-		}, {
-			type: 'left outer',
-			table: 'asset_notes',
-			alias: 'n',
-			on: {'t.id': 'n.transactionId'}
-		}],
-		limit: query.limit,
-		offset: query.offset,
+	modules.api.sql.select(extend(library.scheme.selector["blocks"], {
+		limit: !query.limit || query.limit > 100 ? 100 : query.limit,
+		offset: !query.offset || query.offset < 0 ? 0 : query.offset,
 		fields: library.scheme.fields
-	}, cb);
+	}), library.scheme.alias, cb);
+}
+
+Blocks.prototype.getBlocksAfter = function (cb, query) {
+	modules.api.sql.select(extend(library.scheme.selector["blocks"], {
+		limit: 100,
+		condition: {
+			"b.height": {$gt: query.lastBlockHeight}
+		},
+		fields: library.scheme.fields
+	}), library.scheme.alias, cb);
 }
 
 Blocks.prototype.onMessage = function (query) {
 	if (query.topic == "block" && private.loaded) {
 		var block = query.message;
-		self.processBlock(block, function (err) {
-			if (err) {
-				library.logger("processBlock err", err);
-			}
-		});
+		if (block.lastBlockId == private.lastBlock.id && block.id != private.lastBlock.id && block.id != private.genesisBlock.id) {
+			self.processBlock(block, function (err) {
+				if (err) {
+					library.logger("processBlock err", err);
+				}
+			});
+		}
 	}
 }
 
@@ -421,14 +561,14 @@ Blocks.prototype.onBind = function (_modules) {
 		fields: ["id"]
 	}, function (err, found) {
 		if (err) {
-			library.logger("genesis error", err)
+			library.logger("genesis error 1", err)
 		}
 		if (!found.length) {
 			self.processBlock(private.genesisBlock, function (err) {
 				if (!err) {
 					library.bus.message("blockchainReady");
 				} else {
-					library.logger("genesis error", err)
+					library.logger("genesis error 2", err)
 				}
 			})
 		} else {

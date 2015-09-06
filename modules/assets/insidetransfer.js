@@ -24,11 +24,11 @@ InsideTransfer.prototype.calculateFee = function (trs) {
 InsideTransfer.prototype.verify = function (trs, sender, cb) {
 	var isAddress = /^[0-9]+[C|c]$/g;
 	if (!isAddress.test(trs.recipientId.toLowerCase())) {
-		return cb(errorCode("TRANSACTIONS.INVALID_RECIPIENT", trs));
+		return cb("TRANSACTIONS.INVALID_RECIPIENT");
 	}
 
 	if (trs.amount <= 0) {
-		return cb(errorCode("TRANSACTIONS.INVALID_AMOUNT", trs));
+		return cb("TRANSACTIONS.INVALID_AMOUNT");
 	}
 
 	cb(null, trs);
@@ -38,7 +38,7 @@ InsideTransfer.prototype.getBytes = function (trs) {
 	return null;
 }
 
-InsideTransfer.prototype.apply = function (trs, sender, cb) {
+InsideTransfer.prototype.apply = function (trs, sender, cb, scope) {
 	var amount = trs.amount + trs.fee;
 
 	if (sender.balance < amount) {
@@ -50,18 +50,18 @@ InsideTransfer.prototype.apply = function (trs, sender, cb) {
 			modules.blockchain.accounts.mergeAccountAndGet({
 				address: sender.address,
 				balance: -amount
-			}, cb);
+			}, cb, scope);
 		},
 		function (cb) {
 			modules.blockchain.accounts.mergeAccountAndGet({
 				address: trs.recipientId,
 				balance: trs.amount
-			}, cb);
+			}, cb, scope);
 		}
 	], cb);
 }
 
-InsideTransfer.prototype.undo = function (trs, sender, cb) {
+InsideTransfer.prototype.undo = function (trs, sender, cb, scope) {
 	var amount = trs.amount + trs.fee;
 
 	async.series([
@@ -69,18 +69,18 @@ InsideTransfer.prototype.undo = function (trs, sender, cb) {
 			modules.blockchain.accounts.undoMerging({
 				address: sender.address,
 				balance: -amount
-			}, cb);
+			}, cb, scope);
 		},
 		function (cb) {
 			modules.blockchain.accounts.undoMerging({
 				address: trs.recipientId,
 				balance: trs.amount
-			}, cb);
+			}, cb, scope);
 		}
 	], cb);
 }
 
-InsideTransfer.prototype.applyUnconfirmed = function (trs, sender, cb) {
+InsideTransfer.prototype.applyUnconfirmed = function (trs, sender, cb, scope) {
 	var amount = trs.amount + trs.fee;
 
 	if (sender.u_balance < amount) {
@@ -92,18 +92,18 @@ InsideTransfer.prototype.applyUnconfirmed = function (trs, sender, cb) {
 			modules.blockchain.accounts.mergeAccountAndGet({
 				address: sender.address,
 				u_balance: -amount
-			}, cb);
+			}, cb, scope);
 		},
 		function (cb) {
 			modules.blockchain.accounts.mergeAccountAndGet({
 				address: trs.recipientId,
 				u_balance: trs.amount
-			}, cb);
+			}, cb, scope);
 		}
 	], cb);
 }
 
-InsideTransfer.prototype.undoUnconfirmed = function (trs, sender, cb) {
+InsideTransfer.prototype.undoUnconfirmed = function (trs, sender, cb, scope) {
 	var amount = trs.amount + trs.fee;
 
 	async.series([
@@ -111,13 +111,13 @@ InsideTransfer.prototype.undoUnconfirmed = function (trs, sender, cb) {
 			modules.blockchain.accounts.undoMerging({
 				address: sender.address,
 				u_balance: -amount
-			}, cb);
+			}, cb, scope);
 		},
 		function (cb) {
 			modules.blockchain.accounts.undoMerging({
 				address: trs.recipientId,
 				u_balance: trs.amount
-			}, cb);
+			}, cb, scope);
 		}
 	], cb);
 }
