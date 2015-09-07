@@ -140,12 +140,24 @@ angular.module('encryptiApp').controller('workspaceController', ['userService', 
         $scope.getNote = function (id, cb) {
             noteService.get(id, function (resp) {
                 if (resp.success) {
+                    var note = resp.response.note;
+
                     $scope.note.currentNote = {
-                        title: resp.response.note.title,
-                        text: resp.response.note.data,
+                        title: note.title,
+                        text: note.data,
                         editable: false
                     };
-                    console.log($scope.note.currentNote);
+
+                    if (note.shared == 0) {
+                        noteService.decrypt(note.id, function (err, resp) {
+                            if (resp.success) {
+                                $scope.note.currentNote.title = resp.response.note.title;
+                                $scope.note.currentNote.text = resp.response.note.data;
+                            } else {
+                                alert(resp.error);
+                            }
+                        });
+                    }
                 } else {
                     alert(resp.error);
                 }
@@ -1012,8 +1024,13 @@ angular.module('encryptiApp').service('noteService', ['$http', 'idFactory', 'use
 		});
 	}
 
-	this.decrypt = function (id, secret, cb) {
-		// decrypt text
+	this.decrypt = function (id, cb) {
+		$http.post("/api/dapps/" + idFactory + "/api/note/decrypt", {
+			id : id,
+			secret : userService.user.secret
+		}).then(function (resp) {
+			cb(resp.data);
+		});
 	}
 
 }]);

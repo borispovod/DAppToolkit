@@ -218,7 +218,11 @@ Transactions.prototype.addTransaction = function (cb, query) {
 	});
 }
 
-Transactions.prototype.onMessage = function (query, cb) {
+Transactions.prototype.getTransactions = function (cb, query) {
+	self.getUnconfirmedTransactionList(false, cb)
+}
+
+Transactions.prototype.onMessage = function (query) {
 	switch (query.topic) {
 		case "transaction":
 			var transaction = query.message;

@@ -24,10 +24,16 @@ angular.module('encryptiApp').controller('workspaceController', ['userService', 
                         editable: false
                     };
 
-                    /*if ($scope.note.shared == "0") {
-                        // decrypt
-
-                    }*/
+                    if (note.shared == 0) {
+                        noteService.decrypt(note.id, function (err, resp) {
+                            if (resp.success) {
+                                $scope.note.currentNote.title = resp.response.note.title;
+                                $scope.note.currentNote.text = resp.response.note.data;
+                            } else {
+                                alert(resp.error);
+                            }
+                        });
+                    }
                 } else {
                     alert(resp.error);
                 }

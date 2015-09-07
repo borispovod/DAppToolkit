@@ -149,9 +149,8 @@ Note.prototype.list = function (cb, query) {
 				table: 'asset_notes',
 				alias: "n",
 				on: {"t.id": "n.transactionId"}
-			}],
-			map: ['id', 'type', 'senderId', 'senderPublicKey', 'recipientId', 'amount', 'fee', 'signature', 'blockId', 'title', 'data', 'nonce', 'shared', 'transactionId']
-		}, function (err, notes) {
+			}]
+		}, ['id', 'type', 'senderId', 'senderPublicKey', 'recipientId', 'amount', 'fee', 'signature', 'blockId', 'title', 'data', 'nonce', 'shared', 'transactionId'], function (err, notes) {
 			if (err) {
 				return cb(err.toString());
 			}
@@ -198,9 +197,8 @@ Note.prototype.get = function (cb, query) {
 				table: 'asset_notes',
 				alias: "n",
 				on: {"t.id": "n.transactionId"}
-			}],
-			map: ['id', 'type', 'senderId', 'senderPublicKey', 'recipientId', 'amount', 'fee', 'signature', 'blockId', 'title', 'data', 'nonce', 'shared', 'transactionId']
-		}, function (err, notes) {
+			}]
+		}, ['id', 'type', 'senderId', 'senderPublicKey', 'recipientId', 'amount', 'fee', 'signature', 'blockId', 'title', 'data', 'nonce', 'shared', 'transactionId'], function (err, notes) {
 			if (err) {
 				return cb(err);
 			}
@@ -264,9 +262,8 @@ Note.prototype.decrypt = function (cb, query) {
 				table: 'asset_notes',
 				alias: "n",
 				on: {"t.id": "n.transactionId"}
-			}],
-			map: ['id', 'type', 'senderId', 'senderPublicKey', 'recipientId', 'amount', 'fee', 'signature', 'blockId', 'title', 'data', 'nonce', 'shared', 'transactionId']
-		}, function (err, notes) {
+			}]
+		}, ['id', 'type', 'senderId', 'senderPublicKey', 'recipientId', 'amount', 'fee', 'signature', 'blockId', 'title', 'data', 'nonce', 'shared', 'transactionId'], function (err, notes) {
 			if (err) {
 				return cb(err);
 			}

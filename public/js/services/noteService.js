@@ -35,12 +35,12 @@ angular.module('encryptiApp').service('noteService', ['$http', 'idFactory', 'use
 		});
 	}
 
-	this.decrypt = function (id, secret, cb) {
+	this.decrypt = function (id, cb) {
 		$http.post("/api/dapps/" + idFactory + "/api/note/decrypt", {
 			id : id,
-			secret : secret
+			secret : userService.user.secret
 		}).then(function (resp) {
-
+			cb(resp.data);
 		});
 	}
 
