@@ -147,13 +147,13 @@
 	  },
 	  {
 		"name": "data",
-		"type": "Binary",
+		"type": "String",
 		"length": 2048
 	  },
 	  {
 		"name": "nonce",
-		"type": "Binary",
-		"length": 32
+		"type": "String",
+		"length": 64
 	  },
 	  {
 		"name": "shared",

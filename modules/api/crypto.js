@@ -43,8 +43,18 @@ private.decrypt_cryptobox = function (text, nonce, key) {
 	return nacl.crypto_secretbox_open(text, nonce, private.convertPrivateKey(key));
 }
 
-Crypto.prototype.encrypt = function (keypair, text, cb) {
-	var nonce = private.getNonce();
+Crypto.prototype.encrypt = function (keypair, text, nonce, cb) {
+	if (typeof nonce == 'function') {
+		cb = nonce;
+		nonce = null;
+	}
+
+	if (!nonce) {
+		nonce = private.getNonce();
+	} else {
+		nonce = new Buffer(nonce, 'hex');
+	}
+
 	var encrypted = private.cryptobox(text, nonce, keypair.privateKey);
 
 	return cb(null, {

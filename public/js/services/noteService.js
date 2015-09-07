@@ -2,6 +2,7 @@ angular.module('encryptiApp').service('noteService', ['$http', 'idFactory', 'use
 	function saveNote(note, cb) {
 		$http.post('/api/dapps/' + idFactory + '/api/note/encrypt', {
 			secret: userService.user.secret,
+			title: note.title,
 			data: note.text,
 			shared: note.shared
 		}).then(function (resp) {

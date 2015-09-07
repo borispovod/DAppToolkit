@@ -328,8 +328,6 @@ th {
 }
 .note-list li.current-note {
   font-style: italic;
-}
-.note-list li:nth-child(odd) {
   background-color: #e0e0e0;
 }
 .date {

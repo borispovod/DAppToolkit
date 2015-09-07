@@ -1,3 +1,5 @@
+var async = require('async');
+
 var private = {}, self = null,
 	library = null, modules = null;
 
@@ -10,19 +12,23 @@ function Note(cb, _library) {
 }
 
 Note.prototype.create = function (data, trs) {
-	trs.data = data.data;
+	trs.asset = {
+		note: {
+			data: data.data
+		}
+	};
 
 	if (data.title) {
-		trs.title = data.title;
+		trs.asset.note.title = data.title;
 	}
 
 	if (data.nonce) {
-		trs.nonce = data.nonce;
+		trs.asset.note.nonce = data.nonce;
 	} else {
-		trs.nonce = new Buffer(32);
+		trs.asset.note.nonce = new Buffer(32).toString('hex');
 	}
 
-	trs.shared = data.shared;
+	trs.asset.note.shared = data.shared;
 
 	return trs;
 }
@@ -34,11 +40,11 @@ Note.prototype.calculateFee = function (trs) {
 }
 
 Note.prototype.verify = function (trs, sender, cb) {
-	if (new Buffer(trs.data, 'hex').length > 2048) {
+	if (trs.asset.note.data.length > 2048) {
 		return cb("Max size of encrypted data is 2048 byte, please, reduce your data");
 	}
 
-	if (trs.title && trs.title.length > 100) {
+	if (trs.asset.note.title && trs.asset.note.title.length > 100) {
 		return cb("Max size of title is 100 characters, please, reduce title");
 	}
 
@@ -50,10 +56,10 @@ Note.prototype.process = function (trs, sender, cb) {
 }
 
 Note.prototype.getBytes = function (trs) {
-	var b = Buffer.concat([new Buffer(trs.data, 'hex'), new Buffer(trs.nonce, 'hex')]);
+	var b = Buffer.concat([new Buffer(trs.asset.note.data, 'hex'), new Buffer(trs.asset.note.nonce, 'hex')]);
 
-	if (trs.title) {
-		b = Buffer.concat([new Buffer(trs.title, 'hex'), b]);
+	if (trs.asset.note.title && trs.asset.note.title.length > 0) {
+		b = Buffer.concat([new Buffer(trs.asset.note.title, 'hex'), b]);
 	}
 
 	return b;
@@ -96,10 +102,10 @@ Note.prototype.save = function (trs, cb) {
 		table: "asset_notes",
 		values: {
 			transactionId: trs.id,
-			data: trs.data,
-			nonce: trs.nonce,
-			shared: trs.shared,
-			alias: trs.alias
+			data: trs.asset.note.data,
+			title: trs.asset.note.title,
+			nonce: trs.asset.note.nonce,
+			shared: trs.asset.note.shared
 		}
 	}, cb);
 }
@@ -110,10 +116,12 @@ Note.prototype.dbRead = function (row) {
 	}
 
 	return {
-		transactionId: row.n_transactionId,
-		data: new Buffer(row.n_data).toString('hex'),
-		nonce: new Buffer(row.n_nonce).toString('hex'),
-		shared: row.n_shared
+		note: {
+			data: row.n_data,
+			title: row.n_title,
+			nonce: row.n_nonce,
+			shared: parseInt(row.n_shared)
+		}
 	};
 }
 
@@ -165,6 +173,11 @@ Note.prototype.list = function (cb, query) {
 					return tx.senderPublicKey == query.publicKey && tx.type == 2;
 				});
 
+				for (var i in unconfirmedNotes) {
+					if (unconfirmedNotes[i].shared == 1 && unconfirmedNotes[i].title && unconfirmedNotes[i].title.length > 0) {
+						unconfirmedNotes[i].title = new Buffer(unconfirmedNotes[i].title, 'hex').toString('utf8');
+					}
+				}
 				return cb(null, {success: true, notes: unconfirmedNotes.concat(notes)});
 			});
 		});
@@ -209,6 +222,11 @@ Note.prototype.get = function (cb, query) {
 						return tx.id == query.id;
 					});
 
+					if (note.shared == 1) {
+						note.title = new Buffer(note.title, 'hex').toString('utf8');
+						note.data = new Buffer(note.data, 'hex').toString('utf8');
+					}
+
 					return cb(null, {
 						success: true,
 						note: note
@@ -216,6 +234,12 @@ Note.prototype.get = function (cb, query) {
 				});
 			} else {
 				var note = notes[0];
+
+				if (note.shared == 1) {
+					note.title = new Buffer(note.title, 'hex').toString('utf8');
+					note.data = new Buffer(note.data, 'hex').toString('utf8');
+				}
+
 				return cb(null, {
 					success: true,
 					note: note
@@ -274,7 +298,8 @@ Note.prototype.decrypt = function (cb, query) {
 				async.series([
 					function (cb) {
 						if (note.title && note.title.length > 0) {
-							modules.api.crypto.decrypt(keypair, note.title, function (err, result) {
+							console.log('title', note.title);
+							modules.api.crypto.decrypt(keypair, note.title, note.nonce, function (err, result) {
 								if (err) {
 									cb(err);
 								} else {
@@ -287,7 +312,7 @@ Note.prototype.decrypt = function (cb, query) {
 						}
 					},
 					function (cb) {
-						modules.api.crypto.decrypt(keypair, note.data, function (err, result) {
+						modules.api.crypto.decrypt(keypair, note.data, note.nonce, function (err, result) {
 							if (err) {
 								cb(err);
 							} else {
@@ -348,6 +373,7 @@ Note.prototype.encrypt = function (cb, query) {
 		var secret = query.secret,
 			data = query.data,
 			shared = query.shared,
+			title = query.title,
 			self = this;
 
 		var transaction;
@@ -366,6 +392,7 @@ Note.prototype.encrypt = function (cb, query) {
 				try {
 					transaction = library.modules.logic.transaction.create({
 						type: 2,
+						title: new Buffer(title, 'utf8').toString('hex'),
 						sender: account,
 						keypair: keypair,
 						data: new Buffer(data, 'utf8').toString('hex'),
@@ -377,25 +404,32 @@ Note.prototype.encrypt = function (cb, query) {
 
 				modules.blockchain.transactions.processUnconfirmedTransaction(transaction, cb);
 			} else {
-				modules.api.crypto.encrypt(keypair, data, function (err, result) {
+				modules.api.crypto.encrypt(keypair, data, function (err, data_encrypted) {
 					if (err) {
 						return cb(err);
 					}
 
-					try {
-						transaction = library.modules.logic.transaction.create({
-							type: 2,
-							sender: account,
-							keypair: keypair,
-							nonce: result.nonce,
-							data: result.encrypted,
-							shared: shared
-						});
-					} catch (e) {
-						return setImmediate(cb, e.toString(0));
-					}
+					modules.api.crypto.encrypt(keypair, title, data_encrypted.nonce, function (err, title_encrypted) {
+						if (err) {
+							return cb(err);
+						}
 
-					modules.blockchain.transactions.processUnconfirmedTransaction(transaction, cb);
+						try {
+							transaction = library.modules.logic.transaction.create({
+								type: 2,
+								title: title_encrypted.encrypted,
+								sender: account,
+								keypair: keypair,
+								nonce: data_encrypted.nonce,
+								data: data_encrypted.encrypted,
+								shared: shared
+							});
+						} catch (e) {
+							return setImmediate(cb, e.toString(0));
+						}
+
+						modules.blockchain.transactions.processUnconfirmedTransaction(transaction, cb);
+					});
 				});
 			}
 		});
