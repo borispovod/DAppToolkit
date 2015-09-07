@@ -375,10 +375,7 @@ Note.prototype.encrypt = function (cb, query) {
 					return setImmediate(cb, e.toString(0));
 				}
 
-				modules.blockchain.transactions.onMessage({
-					topic: "transaction",
-					message: transaction
-				}, cb);
+				modules.blockchain.transactions.processUnconfirmedTransaction(transaction, cb);
 			} else {
 				modules.api.crypto.encrypt(keypair, data, function (err, result) {
 					if (err) {
@@ -398,10 +395,7 @@ Note.prototype.encrypt = function (cb, query) {
 						return setImmediate(cb, e.toString(0));
 					}
 
-					modules.blockchain.transactions.onMessage({
-						topic: "transaction",
-						message: transaction
-					}, cb);
+					modules.blockchain.transactions.processUnconfirmedTransaction(transaction, cb);
 				});
 			}
 		});

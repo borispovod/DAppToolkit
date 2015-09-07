@@ -39,7 +39,6 @@ Api.prototype.onBlockchainLoaded = function () {
 	});
 
 	library.sandbox.onMessage(function (message, cb) {
-		console.log("message", message);
 		var handler = private.apies[message.method + " " + message.path];
 		if (handler) {
 			handler(function (err, response) {
