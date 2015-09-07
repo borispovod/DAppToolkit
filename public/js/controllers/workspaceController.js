@@ -13,6 +13,29 @@ angular.module('encryptiApp').controller('workspaceController', ['userService', 
             });
         }
 
+        $scope.getNote = function (id, cb) {
+            noteService.get(id, function (resp) {
+                if (resp.success) {
+                    var note = resp.response.note;
+
+                    $scope.note.currentNote = {
+                        title: note.title,
+                        text: note.data,
+                        editable: false
+                    };
+
+                    /*if ($scope.note.shared == "0") {
+                        // decrypt
+
+                    }*/
+                } else {
+                    alert(resp.error);
+                }
+
+                cb && cb();
+            });
+        }
+
         $scope.note = {
             list: [],
             currentNote: {
@@ -32,6 +55,7 @@ angular.module('encryptiApp').controller('workspaceController', ['userService', 
                 editable: false
             },
             load: function (note) {
+                $scope.getNote(note.id);
                 //this.currentNote = {title: note.title, text: note.text, date: note.date, editable: true, id: note.id}
             },
             new: function () {

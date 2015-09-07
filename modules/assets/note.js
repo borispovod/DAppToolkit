@@ -29,7 +29,7 @@ Note.prototype.create = function (data, trs) {
 
 Note.prototype.calculateFee = function (trs) {
 	// calculate fee
-	var fee = 1;
+	var fee = 10 * 100000000;
 	return fee;
 }
 
@@ -141,7 +141,8 @@ Note.prototype.list = function (cb, query) {
 			table: "transactions",
 			alias: "t",
 			condition: {
-				senderPublicKey: query.publicKey
+				senderPublicKey: query.publicKey,
+				type: 2
 			},
 			join: [{
 				type: 'left outer',
@@ -197,7 +198,8 @@ Note.prototype.get = function (cb, query) {
 				table: 'asset_notes',
 				alias: "n",
 				on: {"t.id": "n.transactionId"}
-			}]
+			}],
+			map: ['id', 'type', 'senderId', 'senderPublicKey', 'recipientId', 'amount', 'fee', 'signature', 'blockId', 'title', 'data', 'nonce', 'shared', 'transactionId']
 		}, function (err, notes) {
 			if (err) {
 				return cb(err);
@@ -223,6 +225,96 @@ Note.prototype.get = function (cb, query) {
 			}
 		});
 	})
+}
+
+Note.prototype.decrypt = function (cb, query) {
+	library.validator.validate(query, {
+		type: "object",
+		properties: {
+			secret: {
+				type: "string",
+				minLength: 1,
+				maxLength: 100
+			},
+			id: {
+				type: "string",
+				minLength: 1
+			}
+		},
+		required: ['secret', 'id']
+	}, function (err) {
+		if (err) {
+			return cb(err[0].message);
+		}
+
+		var self = this,
+			secret = query.secret,
+			id = query.id;
+
+		var keypair = modules.api.crypto.keypair(secret);
+
+		modules.api.sql.select({
+			table: "transactions",
+			alias: "t",
+			condition: {
+				id: query.id
+			},
+			join: [{
+				type: 'left outer',
+				table: 'asset_notes',
+				alias: "n",
+				on: {"t.id": "n.transactionId"}
+			}],
+			map: ['id', 'type', 'senderId', 'senderPublicKey', 'recipientId', 'amount', 'fee', 'signature', 'blockId', 'title', 'data', 'nonce', 'shared', 'transactionId']
+		}, function (err, notes) {
+			if (err) {
+				return cb(err);
+			}
+
+			var note = notes[0];
+
+			if (note.shared == '0') {
+				async.series([
+					function (cb) {
+						if (note.title && note.title.length > 0) {
+							modules.api.crypto.decrypt(keypair, note.title, function (err, result) {
+								if (err) {
+									cb(err);
+								} else {
+									note.title = result.decrypted;
+									cb();
+								}
+							});
+						} else {
+							cb();
+						}
+					},
+					function (cb) {
+						modules.api.crypto.decrypt(keypair, note.data, function (err, result) {
+							if (err) {
+								cb(err);
+							} else {
+								note.data = result.decrypted;
+								cb();
+							}
+						});
+					}
+				], function (err) {
+					if (err) {
+						return cb(err);
+					} else {
+						return cb(null, {
+							success: true,
+							note: note
+						});
+					}
+				});
+
+			} else {
+				return cb("Can't decrypt note, it's already decrypted");
+			}
+		});
+	});
 }
 
 Note.prototype.encrypt = function (cb, query) {
