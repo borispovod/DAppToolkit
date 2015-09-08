@@ -11,6 +11,23 @@ function Note(cb, _library) {
 	cb(null, self);
 }
 
+private.normalize = function (tx) {
+	console.log(tx);
+	tx.asset = {
+		note: {
+			data: tx.data,
+			title: tx.title,
+			shared: tx.shared,
+			nonce: tx.nonce
+		}
+	}
+
+	delete tx.data;
+	delete tx.title;
+	delete tx.shared;
+	delete tx.nonce;
+}
+
 Note.prototype.create = function (data, trs) {
 	trs.asset = {
 		note: {
@@ -68,14 +85,14 @@ Note.prototype.getBytes = function (trs) {
 Note.prototype.apply = function (trs, sender, cb) {
 	modules.blockchain.accounts.mergeAccountAndGet({
 		address: sender.address,
-		balance: sender.balance - trs.fee
+		balance: -trs.fee
 	}, cb);
 }
 
 Note.prototype.undo = function (trs, sender, cb) {
 	modules.blockchain.accounts.undoMerging({
 		address: sender.address,
-		balance: sender.balance + trs.fee
+		balance: trs.fee
 	}, cb);
 }
 
@@ -86,14 +103,14 @@ Note.prototype.applyUnconfirmed = function (trs, sender, cb) {
 
 	modules.blockchain.accounts.mergeAccountAndGet({
 		address: sender.address,
-		u_balance: sender.balance - trs.fee
+		u_balance: -trs.fee
 	}, cb);
 }
 
 Note.prototype.undoUnconfirmed = function (trs, sender, cb) {
 	modules.blockchain.accounts.undoMerging({
 		address: sender.address,
-		u_balance: sender.balance + trs.fee
+		u_balance: trs.fee
 	}, cb);
 }
 
@@ -163,6 +180,10 @@ Note.prototype.list = function (cb, query) {
 				return cb(err.toString());
 			}
 
+			for (var i in notes) {
+				private.normalize(notes[i]);
+			}
+
 			// get unconfirmed transactions and push to notes
 			modules.blockchain.transactions.getUnconfirmedTransactionList(true, function (err, transactions) {
 				if (err) {
@@ -217,32 +238,38 @@ Note.prototype.get = function (cb, query) {
 			}
 
 			if (notes.length == 0) {
-				modules.blockchain.transactions.getUnconfirmedTransactionList(function (transactions) {
-					var note = transactions.find(function (tx) {
+				modules.blockchain.transactions.getUnconfirmedTransactionList(false, function (err, transactions) {
+					var tx = transactions.filter(function (tx) {
 						return tx.id == query.id;
 					});
 
-					if (note.shared == 1) {
-						note.title = new Buffer(note.title, 'hex').toString('utf8');
-						note.data = new Buffer(note.data, 'hex').toString('utf8');
-					}
+					if (tx.length > 0) {
+						tx = tx[0];
+						if (tx.asset.note.shared == 1) {
+							tx.asset.note.title = new Buffer(tx.asset.note.title, 'hex').toString('utf8');
+							tx.asset.note.data = new Buffer(tx.asset.note.data, 'hex').toString('utf8');
+						}
 
-					return cb(null, {
-						success: true,
-						note: note
-					});
+						return cb(null, {
+							success: true,
+							note: tx
+						});
+					} else {
+						return cb("Note not found");
+					}
 				});
 			} else {
-				var note = notes[0];
+				var tx = notes[0];
+				private.normalize(tx);
 
-				if (note.shared == 1) {
-					note.title = new Buffer(note.title, 'hex').toString('utf8');
-					note.data = new Buffer(note.data, 'hex').toString('utf8');
+				if (tx.asset.note.shared == 1) {
+					tx.asset.note.title = new Buffer(tx.asset.note.title, 'hex').toString('utf8');
+					tx.asset.note.data = new Buffer(tx.asset.note.data, 'hex').toString('utf8');
 				}
 
 				return cb(null, {
 					success: true,
-					note: note
+					note: tx
 				});
 			}
 		});
@@ -258,12 +285,22 @@ Note.prototype.decrypt = function (cb, query) {
 				minLength: 1,
 				maxLength: 100
 			},
-			id: {
+			title: {
+				type: "string",
+				minLength: 1,
+				maxLength: 100
+			},
+			data: {
+				type: "string",
+				minLength: 1,
+				maxLength: 2000
+			},
+			nonce: {
 				type: "string",
 				minLength: 1
 			}
 		},
-		required: ['secret', 'id']
+		required: ['secret', 'data', 'nonce']
 	}, function (err) {
 		if (err) {
 			return cb(err[0].message);
@@ -271,70 +308,45 @@ Note.prototype.decrypt = function (cb, query) {
 
 		var self = this,
 			secret = query.secret,
-			id = query.id;
+			data = query.data,
+			title = query.title,
+			nonce = query.nonce;
 
 		var keypair = modules.api.crypto.keypair(secret);
+		var result = {};
 
-		modules.api.sql.select({
-			table: "transactions",
-			alias: "t",
-			condition: {
-				id: query.id
+		async.series([
+			function (cb) {
+				if (title) {
+					modules.api.crypto.decrypt(keypair, title, nonce, function (err, data) {
+						if (err) {
+							return cb(err);
+						} else {
+							result.title = data.decrypted;
+							cb();
+						}
+					});
+				}
 			},
-			join: [{
-				type: 'left outer',
-				table: 'asset_notes',
-				alias: "n",
-				on: {"t.id": "n.transactionId"}
-			}]
-		}, ['id', 'type', 'senderId', 'senderPublicKey', 'recipientId', 'amount', 'fee', 'signature', 'blockId', 'title', 'data', 'nonce', 'shared', 'transactionId'], function (err, notes) {
+			function (cb) {
+				modules.api.crypto.decrypt(keypair, data, nonce, function (err, data) {
+					if (err) {
+						return cb(err);
+					} else {
+						result.data = data.decrypted;
+						cb();
+					}
+				});
+			}
+		], function (err) {
 			if (err) {
 				return cb(err);
 			}
 
-			var note = notes[0];
-
-			if (note.shared == '0') {
-				async.series([
-					function (cb) {
-						if (note.title && note.title.length > 0) {
-							console.log('title', note.title);
-							modules.api.crypto.decrypt(keypair, note.title, note.nonce, function (err, result) {
-								if (err) {
-									cb(err);
-								} else {
-									note.title = result.decrypted;
-									cb();
-								}
-							});
-						} else {
-							cb();
-						}
-					},
-					function (cb) {
-						modules.api.crypto.decrypt(keypair, note.data, note.nonce, function (err, result) {
-							if (err) {
-								cb(err);
-							} else {
-								note.data = result.decrypted;
-								cb();
-							}
-						});
-					}
-				], function (err) {
-					if (err) {
-						return cb(err);
-					} else {
-						return cb(null, {
-							success: true,
-							note: note
-						});
-					}
-				});
-
-			} else {
-				return cb("Can't decrypt note, it's already decrypted");
-			}
+			return cb(null, {
+				success: true,
+				note: result
+			});
 		});
 	});
 }

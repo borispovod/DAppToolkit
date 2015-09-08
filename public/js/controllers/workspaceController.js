@@ -16,17 +16,17 @@ angular.module('encryptiApp').controller('workspaceController', ['userService', 
         $scope.getNote = function (id, cb) {
             noteService.get(id, function (resp) {
                 if (resp.success) {
-                    var note = resp.response.note;
+                    var tx = resp.response.note;
 
                     $scope.note.currentNote = {
                         title: "Loading...",
                         text: "Loading...",
-                        id: note.id,
+                        id: tx.id,
                         editable: false
                     };
 
-                    if (note.shared == 0) {
-                        noteService.decrypt(note.id, function (resp) {
+                    if (tx.asset.note.shared == 0) {
+                        noteService.decrypt(tx, function (resp) {
                             if (resp.success) {
                                 $scope.note.currentNote.title = resp.response.note.title;
                                 $scope.note.currentNote.text = resp.response.note.data;
@@ -35,8 +35,8 @@ angular.module('encryptiApp').controller('workspaceController', ['userService', 
                             }
                         });
                     } else {
-                        $scope.note.currentNote.title = note.title;
-                        $scope.note.currentNote.text = note.data;
+                        $scope.note.currentNote.title = tx.asset.note.title;
+                        $scope.note.currentNote.text = tx.asset.note.data;
                     }
                 } else {
                     alert(resp.error);
@@ -66,7 +66,6 @@ angular.module('encryptiApp').controller('workspaceController', ['userService', 
             },
             load: function (note) {
                 $scope.getNote(note.id);
-                //this.currentNote = {title: note.title, text: note.text, date: note.date, editable: true, id: note.id}
             },
             new: function () {
                 this.currentNote = {title: '', text: '', editable: true}
@@ -81,11 +80,13 @@ angular.module('encryptiApp').controller('workspaceController', ['userService', 
                 });
             },
             encrypt: function () {
+                var self = this;
                 noteService.encrypt(this.currentNote, function (err) {
                     if (err) {
                         alert(err);
                     } else {
                         $scope.loadNotes($scope.userData.publicKey);
+                        self.currentNote = null;
                     }
                 })
             }

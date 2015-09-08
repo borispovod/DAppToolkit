@@ -4,6 +4,7 @@ angular.module('encryptiApp').service('noteService', ['$http', 'idFactory', 'use
 			secret: userService.user.secret,
 			title: note.title,
 			data: note.text,
+			nonce: note.nonce,
 			shared: note.shared
 		}).then(function (resp) {
 			cb(resp.data);
@@ -36,9 +37,11 @@ angular.module('encryptiApp').service('noteService', ['$http', 'idFactory', 'use
 		});
 	}
 
-	this.decrypt = function (id, cb) {
+	this.decrypt = function (tx, cb) {
 		$http.post("/api/dapps/" + idFactory + "/api/note/decrypt", {
-			id : id,
+			data : tx.asset.note.data,
+			title: tx.asset.note.title,
+			nonce: tx.asset.note.nonce,
 			secret : userService.user.secret
 		}).then(function (resp) {
 			cb(resp.data);
