@@ -604,3 +604,129 @@ dropdown > div > div.dropdown-list > div > div.selected > i {
 dropdown > div.show > div.dropdown-list {
   transform: scale(1, 1);
 }
+.modal {
+  position: fixed;
+  height: 100%;
+  width: 100%;
+  top: 0;
+  background-color: rgba(45, 45, 45, 0.8);
+}
+.modal .modal-dialog {
+  margin: 0 auto;
+  width: 70%;
+  height: 90%;
+}
+.modal .modal-dialog .modal-content {
+  background-color: white;
+  margin: 40px 0;
+  height: 100%;
+  position: relative;
+}
+.modal .modal-dialog .modal-content .modal-header {
+  height: 110px;
+  width: 100%;
+  background-color: #2196f3;
+  position: relative;
+  text-overflow: ellipsis;
+}
+.modal .modal-dialog .modal-content .modal-header h3 {
+  margin: 0;
+  font-size: 1.7rem;
+  line-height: 110px;
+  text-align: center;
+  color: #fff;
+  opacity: .75;
+  padding: 0 110px 0 0;
+}
+.modal .modal-dialog .modal-content .modal-header-border {
+  width: 100%;
+  background-color: #22659e;
+  height: 4px;
+}
+.modal .modal-dialog .modal-content .modal-body {
+  margin: 20px;
+  overflow: auto;
+}
+.modal .modal-dialog .modal-content .modal-body::-webkit-scrollbar {
+  width: 8px;
+}
+.modal .modal-dialog .modal-content .modal-body::-webkit-scrollbar-track {
+  background-color: rgba(207, 216, 220, 0.4);
+  opacity: 0.1;
+  border-radius: 10px;
+}
+.modal .modal-dialog .modal-content .modal-body::-webkit-scrollbar-thumb {
+  border-radius: 10px;
+  background-color: rgba(55, 71, 79, 0.2);
+}
+.modal .modal-dialog .modal-content .modal-footer {
+  box-sizing: border-box;
+  background-color: #2196f3;
+  position: absolute;
+  bottom: 0;
+  height: 70px;
+  width: 100%;
+}
+.modal .modal-dialog .modal-content .modal-footer .buttons {
+  float: right;
+  height: 100%;
+}
+.modal .modal-dialog .modal-content .modal-footer .buttons .btn {
+  text-decoration: none;
+  color: #fff;
+  background-color: #26a69a;
+  text-align: center;
+  letter-spacing: .5px;
+  -webkit-transition: 0.2s ease-out;
+  -moz-transition: 0.2s ease-out;
+  -o-transition: 0.2s ease-out;
+  -ms-transition: 0.2s ease-out;
+  transition: 0.2s ease-out;
+  cursor: pointer;
+  height: 100%;
+  border: none;
+  margin: 0;
+  padding: 0 40px;
+}
+.modal .modal-dialog .modal-content .modal-footer .buttons .btn:hover {
+  background-color: #2bbbad;
+}
+.modal .modal-dialog .input_group {
+  padding: 20px;
+}
+.modal .modal-dialog .input_group label {
+  display: block;
+  font-size: 20px;
+  line-height: 20px;
+  color: #424242;
+}
+.modal .modal-dialog .input_group input {
+  box-sizing: border-box;
+  margin-top: 20px;
+  font-size: 20px;
+  line-height: 20px;
+  padding: 20px 40px;
+  color: #424242;
+  border: none;
+  border-bottom: 2px solid #424242;
+  width: 100%;
+  display: block;
+}
+.modal .modal-dialog .input_group input.error {
+  border-bottom: 2px solid #9e4242 !important;
+}
+.modal .modal-dialog .input_group input:active,
+.modal .modal-dialog .input_group input:focus {
+  border: none;
+  outline: none;
+  border-bottom: 2px solid #424242;
+}
+.error_wrapper {
+  padding: 20px;
+}
+.error_wrapper .error_text {
+  padding: 20px;
+  border: 2px solid #9e4242;
+  color: #9e4242;
+  font-size: 20px;
+}

@@ -1,0 +1,130 @@
+.modal {
+  position: fixed;
+  height: 100%;
+  width: 100%;
+  top: 0;
+  background-color: rgba(45, 45, 45, .8);
+  .modal-dialog {
+    margin: 0 auto;
+    width: 70%;
+    height: 90%;
+    .modal-content {
+      background-color: white;
+      margin: 40px 0;
+      height: 100%;
+      position: relative;
+      .modal-header {
+        height: 110px;
+        width: 100%;
+        background-color: #2196f3;
+        position: relative;
+        text-overflow: ellipsis;
+        h3 {
+          margin: 0;
+          font-size: 1.7rem;
+          line-height: 110px;
+          text-align: center;
+          color: #fff;
+          opacity: .75;
+          padding: 0 110px 0 0;
+        }
+      }
+      .modal-header-border {
+        width: 100%;
+        background-color: #22659e;
+        height: 4px;
+      }
+      .modal-body {
+        margin: 20px;
+        &::-webkit-scrollbar {
+          width: 8px;
+        }
+
+        &::-webkit-scrollbar-track {
+          background-color: rgba(207, 216, 220, 0.4);
+          opacity: 0.1;
+          border-radius: 10px;
+        }
+
+        &::-webkit-scrollbar-thumb {
+          border-radius: 10px;
+          background-color: rgba(55, 71, 79, 0.2);
+        }
+        overflow: auto;
+      }
+
+      .modal-footer {
+        box-sizing: border-box;
+        background-color: #2196f3;
+        position: absolute;
+        bottom: 0;
+        height: 70px;
+        width: 100%;
+        .buttons {
+          float: right;
+          height: 100%;
+          .btn {
+            text-decoration: none;
+            color: #fff;
+            background-color: #26a69a;
+            text-align: center;
+            letter-spacing: .5px;
+            -webkit-transition: .2s ease-out;
+            -moz-transition: .2s ease-out;
+            -o-transition: .2s ease-out;
+            -ms-transition: .2s ease-out;
+            transition: .2s ease-out;
+            cursor: pointer;
+            height: 100%;
+            border: none;
+            margin: 0;
+            padding: 0 40px;
+            &:hover {
+              background-color: #2bbbad;
+            }
+          }
+        }
+
+      }
+    }
+    .input_group {
+      padding: 20px;
+      label {
+        display: block;
+        font-size: 20px;
+        line-height: 20px;
+        color: #424242;
+      }
+      input {
+        box-sizing: border-box;
+        margin-top: 20px;
+        font-size: 20px;
+        line-height: 20px;
+        padding: 20px 40px;
+        color: #424242;
+        border: none;
+        border-bottom: 2px solid #424242;
+        width: 100%;
+        display: block;
+        &.error {
+          border-bottom: 2px solid #9e4242 !important;
+        }
+        &:active, &:focus {
+          border: none;
+          outline: none;
+          border-bottom: 2px solid #424242;
+        }
+      }
+    }
+  }
+}
+
+.error_wrapper {
+  padding: 20px;
+  .error_text {
+    padding: 20px;
+    border: 2px solid #9e4242;
+    color: #9e4242;
+    font-size: 20px;
+  }
+}

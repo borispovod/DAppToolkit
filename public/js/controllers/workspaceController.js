@@ -108,7 +108,7 @@ angular.module('encryptiApp').controller('workspaceController', ['userService', 
 
         $timeout(function loadBalance() {
             userService.updateBalance(function () {
-                $timeout(loadBalance, 1000);
+                $timeout(loadBalance, 10000);
             });
         }, 10000);
 
@@ -118,4 +118,8 @@ angular.module('encryptiApp').controller('workspaceController', ['userService', 
                 $timeout(loadNotesTimeout, 10000);
             });
         }, 10000);
+
+        $scope.deposit = function () {
+            $state.go('main.workspace.deposit');
+        }
     }]);
