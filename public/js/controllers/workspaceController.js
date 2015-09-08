@@ -1,5 +1,5 @@
-angular.module('encryptiApp').controller('workspaceController', ['userService', 'authService', 'noteService', '$scope', "$timeout",
-    function (userService, authService, noteService, $scope, $timeout) {
+angular.module('encryptiApp').controller('workspaceController', ['userService', 'authService', 'idFactory', 'noteService', '$scope', "$timeout",
+    function (userService, authService, idFactory, noteService, $scope, $timeout) {
         $scope.loadNotes = function (publicKey, cb) {
             noteService.list(publicKey, function (resp) {
                 if (resp.success) {
@@ -71,11 +71,14 @@ angular.module('encryptiApp').controller('workspaceController', ['userService', 
                 this.currentNote = {title: '', text: '', editable: true}
             },
             share: function () {
+                var self = this;
                 noteService.save(this.currentNote, function (err) {
                     if (err) {
                         alert(err);
                     } else {
                         $scope.loadNotes($scope.userData.publicKey);
+                        userService.updateBalance();
+                        self.currentNote = null;
                     }
                 });
             },
@@ -86,6 +89,7 @@ angular.module('encryptiApp').controller('workspaceController', ['userService', 
                         alert(err);
                     } else {
                         $scope.loadNotes($scope.userData.publicKey);
+                        userService.updateBalance();
                         self.currentNote = null;
                     }
                 })
@@ -101,6 +105,12 @@ angular.module('encryptiApp').controller('workspaceController', ['userService', 
         $scope.logout = function () {
             authService.setUnlogged();
         }
+
+        $timeout(function loadBalance() {
+            userService.updateBalance(function () {
+                $timeout(loadBalance, 1000);
+            });
+        }, 10000);
 
         $scope.loadNotes($scope.userData.publicKey);
         $timeout(function loadNotesTimeout() {

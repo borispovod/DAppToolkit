@@ -225,6 +225,13 @@ Accounts.prototype.onBind = function (_modules) {
 	modules = _modules;
 }
 
+Accounts.prototype.get = function (cb, query) {
+	var account = private.getAccount(query.address);
+	cb(null, {
+		account: account
+	});
+}
+
 Accounts.prototype.open = function (cb, query) {
 	var keypair = modules.api.crypto.keypair(query.secret);
 	var address = self.generateAddressByPublicKey(keypair.publicKey);

@@ -12,7 +12,6 @@ function Note(cb, _library) {
 }
 
 private.normalize = function (tx) {
-	console.log(tx);
 	tx.asset = {
 		note: {
 			data: tx.data,
@@ -92,7 +91,7 @@ Note.prototype.apply = function (trs, sender, cb) {
 Note.prototype.undo = function (trs, sender, cb) {
 	modules.blockchain.accounts.undoMerging({
 		address: sender.address,
-		balance: trs.fee
+		balance: -trs.fee
 	}, cb);
 }
 
@@ -110,7 +109,7 @@ Note.prototype.applyUnconfirmed = function (trs, sender, cb) {
 Note.prototype.undoUnconfirmed = function (trs, sender, cb) {
 	modules.blockchain.accounts.undoMerging({
 		address: sender.address,
-		u_balance: trs.fee
+		u_balance: -trs.fee
 	}, cb);
 }
 
