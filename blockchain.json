@@ -153,7 +153,7 @@
 		]
 	},
 	{
-		"table": "asset_myasset",
+        "table": "asset_myasset",
 		"alias": "t_ma",
 		"type": "table",
 		"tableFields": [
@@ -168,5 +168,22 @@
 				"length": 21
 			}
 		]
+	},
+	{
+      "table": "asset_messages",
+	  "alias": "tm",
+	  "type": "table",
+	  "tableFields": [
+		{
+		  "name": "message",
+		  "type": "String",
+		  "length": 320
+		},
+		{
+		  "name": "transactionId",
+		  "type": "String",
+		  "length": 21
+		}
+	  ]
 	}
 ]
