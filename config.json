@@ -8,5 +8,15 @@
 			"ip": "104.155.15.135",
 			"port": 7040
 		}
-	]
+	],
+	"bitcoin": {
+		"address": "",
+		"config" : {
+			"host": "192.168.99.100",
+			"port": 18332,
+			"user": "rpcuser",
+			"pass": "rpcpassword",
+			"timeout": 30000
+		}
+	}
 }

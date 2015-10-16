@@ -2,12 +2,15 @@ var extend = require('extend');
 var util = require('util');
 var crypto = require('crypto-browserify');
 var bignum = require('browserify-bignum');
+var bitcoin = require('bitcoinjs-lib');
+var bitcore = require('bitcore');
 
 var private = {}, self = null,
 	library = null, modules = null;
 
 private.accounts = [];
 private.accountsIndexById = {};
+private.accountsIndexByBtc = {};
 private.executor = null;
 
 function Accounts(cb, _library) {
@@ -67,18 +70,30 @@ private.addAccount = function (account, scope) {
 	if (!account.address) {
 		account.address = self.generateAddressByPublicKey(account.publicKey);
 	}
+
+	account.btcAddress = account.btcAddress || 0;
 	account.balance = account.balance || 0;
 	account.u_balance = account.u_balance || 0;
 	(scope || private).accounts.push(account);
 	var index = (scope || private).accounts.length - 1;
 	(scope || private).accountsIndexById[account.address] = index;
 
+	if (account.btcAddress) {
+		(scope || private).accountsIndexByBtc[account.btcAddress] = index;
+	}
+
 	return account;
 }
 
 private.removeAccount = function (address, scope) {
 	var index = (scope || private).accountsIndexById[address];
+	var account = (scope || private).accounts[index];
 	delete (scope || private).accountsIndexById[address];
+
+	if (account.btcAddress) {
+		delete (scope || private).accountsIndexByBtc[account.btcAddress];
+	}
+
 	(scope || private).accounts[index] = undefined;
 }
 
@@ -87,10 +102,16 @@ private.getAccount = function (address, scope) {
 	return (scope || private).accounts[index];
 }
 
+private.getAccountByBtc = function (btcAddress, scope) {
+	var index = (scope || private).accountsIndexByBtc[btcAddress];
+	return (scope || private).accounts[index];
+}
+
 Accounts.prototype.clone = function (cb) {
 	var r = {
 		data: extend(true, {}, private.accounts),
-		index: extend(true, {}, private.accountsIndexById)
+		index: extend(true, {}, private.accountsIndexById),
+		btcIndex: extend(true, {}, private.accountsIndexByBtc)
 	};
 
 	for (var i in r.data) {
@@ -114,8 +135,14 @@ Accounts.prototype.getExecutor = function (cb) {
 			secret: process.argv[2],
 			isAuthor: res.authorId == address
 		}
+
 		cb(err, private.executor);
 	});
+}
+
+Accounts.prototype.generateAddressByBitcoinPublicKey = function (bitcoinPublicKey) {
+	var address = bitcore.Address.fromPublicKey(publicKey);
+	return address;
 }
 
 Accounts.prototype.generateAddressByPublicKey = function (publicKey) {
@@ -131,14 +158,28 @@ Accounts.prototype.generateAddressByPublicKey = function (publicKey) {
 
 Accounts.prototype.getAccount = function (filter, cb, scope) {
 	var address = filter.address;
-	if (filter.publicKey) {
-		address = self.generateAddressByPublicKey(filter.publicKey);
-	}
-	if (!address) {
-		return cb("must provide address or publicKey");
-	}
+	var btcAddress = filter.btcAddress;
 
-	cb(null, private.getAccount(address, scope));
+	if (!btcAddress && !filter.btcPublicKey) {
+		if (filter.publicKey) {
+			address = self.generateAddressByPublicKey(filter.publicKey);
+		}
+		if (!address) {
+			return cb("must provide address or publicKey");
+		}
+
+		cb(null, private.getAccount(address, scope));
+	} else {
+		if (filter.btcPublicKey) {
+			btcAddress = self.generateAddressByBitcoinPublicKey(filter.btcPublicKey);
+		}
+
+		if (!btcAddress) {
+			return cb("must provide address or public key");
+		}
+
+		cb(null, private.getAccountByBtc(btcAddress, scope));
+	}
 }
 
 Accounts.prototype.getAccounts = function (cb, scope) {
@@ -151,14 +192,28 @@ Accounts.prototype.getAccounts = function (cb, scope) {
 
 Accounts.prototype.setAccountAndGet = function (data, cb, scope) {
 	var address = data.address || null;
-	if (address === null) {
-		if (data.publicKey) {
-			address = self.generateAddressByPublicKey(data.publicKey);
-		} else {
-			return cb("must provide address or publicKey");
+	var btcAddress = data.btcAddress || null;
+
+	if (!btcAddress && !data.btcPublicKey) {
+		if (address === null) {
+			if (data.publicKey) {
+				address = self.generateAddressByPublicKey(data.publicKey);
+			} else {
+				return cb("must provide address or publicKey");
+			}
 		}
+		var account = private.getAccount(address, scope);
+	} else {
+		if (btcAddress == null) {
+			if (data.btcPublicKey) {
+				btcAddress = self.generateAddressByBitcoinPublicKey(data.btcPublicKey);
+			} else {
+				return cb("must provide address or publicKey");
+			}
+		}
+
+		var account = private.getAccountByBtc(btcAddress, scope);
 	}
-	var account = private.getAccount(address, scope);
 
 	if (!account) {
 		account = private.addAccount(data, scope);

@@ -1,6 +1,7 @@
 var bignum = require('browserify-bignum');
 var async = require('async');
-var ip = require('ip')
+var ip = require('ip');
+var bitcore = require('bitcore');
 
 var private = {}, self = null,
 	library = null, modules = null;
@@ -303,23 +304,53 @@ private.balanceSync = function (cb) {
 						}
 					}
 				],
-				fields: [{"t_dt.src_id": "id"}],
+				fields: [{
+					expression: 'count(*)'
+				}],
 				condition: {
 					type: 1
-				},
-				sort: {
-					"b.height": -1
-				},
-				limit: 1
-			}, {id: String}, function (err, found) {
+				}
+			}, {id: String}, function (err, rows) {
 				if (err) {
 					return cb(err);
 				}
 
-				var id = null;
+				var count = rows[0].count;
 
+				modules.bitcoin.getBalanceTransactions(count, function (err, transactions) {
+					if (err) {
+						return cb(err);
+					}
+
+					modules.blockchain.accounts.setAccountAndGet({publicKey: executor.keypair.publicKey}, function (err, sender) {
+						if (err) {
+							return cb(err);
+						}
+
+						async.eachSeries(transactions, function (transaction, cb) {
+							modules.blockchain.accounts.setAccountAndGet({publicKey: transaction.senderPublicKey}, function (err, recipient) {
+								var trs = modules.logic.transaction.create({
+									type: 1,
+									sender: sender,
+									keypair: executor.keypair,
+									amount: Unit.fromBTC(transaction.amount).toSatoshis(),
+									src_id: transaction.txid,
+									recipientId: recipient.address
+								});
+
+								modules.blockchain.transactions.processUnconfirmedTransaction(trs, function (err) {
+									if (err) {
+										library.logger("processUnconfirmedTransaction error", err)
+									}
+									cb(err);
+								});
+							});
+						}, cb);
+					});
+				});
+				/*
 				if (found.length) {
-					id = id = found[0].id;
+					id = found[0].id;
 				}
 
 				modules.api.dapps.getBalanceTransactions(id, function (err, transactions) {
@@ -349,7 +380,7 @@ private.balanceSync = function (cb) {
 							});
 						}, cb);
 					});
-				});
+				});*/
 			});
 		} else {
 			setImmediate(cb);
