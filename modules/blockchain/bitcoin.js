@@ -11,6 +11,9 @@ function Bitcoin(cb, _library) {
 	cb(null, self);
 }
 
+Bitcoin.prototype.getTransaction = function (id, cb) {
+	client.cmd('getrawtransaction', id, 1, cb);
+}
 
 Bitcoin.prototype.getBalanceTransactions = function (from, cb) {
 	var btcTransactions = [],
@@ -32,7 +35,7 @@ Bitcoin.prototype.getBalanceTransactions = function (from, cb) {
 					method: "getrawtransaction",
 					params: [transactions[i].txid, 1]
 				})
-			};
+			}
 
 			client.cmd(batch, function (err, transactions) {
 				if (err) {

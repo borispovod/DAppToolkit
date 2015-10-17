@@ -1,3 +1,5 @@
+var bitcore = require('bitcore');
+
 var private = {}, self = null,
 	library = null, modules = null;
 
@@ -8,7 +10,8 @@ function OutsideTransfer(cb, _library) {
 }
 
 OutsideTransfer.prototype.create = function (data, trs) {
-	trs.recipientId = data.recipientId;
+	trs.recipientId = null;
+	trs.btcRecipient = data.btcRecipient;
 	trs.amount = data.amount;
 
 	trs.asset.outsidetransfer = {
@@ -23,8 +26,11 @@ OutsideTransfer.prototype.calculateFee = function (trs) {
 }
 
 OutsideTransfer.prototype.verify = function (trs, sender, cb, scope) {
-	var isAddress = /^[0-9]+[C|c]$/g;
-	if (!isAddress.test(trs.recipientId.toLowerCase())) {
+	if (!bitcore.Address.isValid(trs.btcRecipient)) {
+		return cb("TRANSACTIONS.INCORRECT_BTC_RECIPIENT");
+	}
+
+	if (typeof trs.recipientId !== 'undefiend' || trs.recipientId != null) {
 		return cb("TRANSACTIONS.INVALID_RECIPIENT");
 	}
 

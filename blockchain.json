@@ -138,6 +138,11 @@
 				"length": 21
 			},
 			{
+				"name": "btcRecipient",
+				"type": "String",
+				"length": 35
+			},
+			{
 				"name": "amount",
 				"type": "BigInt",
 				"not_null": true
@@ -182,7 +187,7 @@
 			{
 				"name": "src_id",
 				"type": "String",
-				"length": 21,
+				"length": 64,
 				"not_null": true,
 				"unique": true
 			},

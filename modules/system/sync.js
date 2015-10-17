@@ -317,7 +317,7 @@ private.balanceSync = function (cb) {
 
 				var count = rows[0].count;
 
-				modules.bitcoin.getBalanceTransactions(count, function (err, transactions) {
+				modules.blockchain.bitcoin.getBalanceTransactions(count, function (err, transactions) {
 					if (err) {
 						return cb(err);
 					}
@@ -328,23 +328,37 @@ private.balanceSync = function (cb) {
 						}
 
 						async.eachSeries(transactions, function (transaction, cb) {
-							modules.blockchain.accounts.setAccountAndGet({publicKey: transaction.senderPublicKey}, function (err, recipient) {
-								var trs = modules.logic.transaction.create({
-									type: 1,
-									sender: sender,
-									keypair: executor.keypair,
-									amount: Unit.fromBTC(transaction.amount).toSatoshis(),
-									src_id: transaction.txid,
-									recipientId: recipient.address
+
+							async.eachSeries(transaction.vin, function (vin, cb) {
+								modules.blockchain.bitcoin.getTransaction(vin.txid, function (err, tx) {
+									if (err) {
+										return cb(err);
+									}
+
+									var address = tx['out'][vin['vout']]['scriptPubKey']['addresses'][0];
+
+									modules.blockchain.accounts.setAccountAndGet({btcAddress: address}, function (err, recipient) {
+										var trs = modules.logic.transaction.create({
+											type: 1,
+											sender: sender,
+											keypair: executor.keypair,
+											amount: Unit.fromBTC(transaction.amount).toSatoshis(),
+											src_id: vin.txid,
+											btcRecipient: address
+										});
+
+										modules.blockchain.transactions.processUnconfirmedTransaction(trs, function (err) {
+											if (err) {
+												library.logger("processUnconfirmedTransaction error", err)
+											}
+											cb(err);
+										});
+									});
 								});
 
-								modules.blockchain.transactions.processUnconfirmedTransaction(trs, function (err) {
-									if (err) {
-										library.logger("processUnconfirmedTransaction error", err)
-									}
-									cb(err);
-								});
-							});
+
+							}, cb);
+
 						}, cb);
 					});
 				});

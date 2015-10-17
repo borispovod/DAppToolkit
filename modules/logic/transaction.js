@@ -73,6 +73,10 @@ Transaction.prototype.getBytes = function (trs, skipSignature) {
 		var assetBytes = private.types[trs.type].getBytes.call(self, trs, skipSignature);
 		var assetSize = assetBytes ? assetBytes.length : 0;
 
+		if (trs.btcRecipient) {
+			assetSize += trs.btcRecipient.length;
+		}
+
 		var bb = new ByteBuffer(1 + 4 + 32 + 8 + 8 + 64 + 64 + assetSize, true);
 		bb.writeByte(trs.type);
 		bb.writeInt(trs.timestamp);
@@ -92,6 +96,12 @@ Transaction.prototype.getBytes = function (trs, skipSignature) {
 		} else {
 			for (var i = 0; i < 8; i++) {
 				bb.writeByte(0);
+			}
+		}
+
+		if (trs.btcRecipient) {
+			for (var i = 0; i < trs.btcRecipient.length; i++) {
+				bb.writeByte(trs.btcRecipient[i]);
 			}
 		}
 
@@ -262,6 +272,7 @@ Transaction.prototype.save = function (trs, cb) {
 			senderId: trs.senderId,
 			senderPublicKey: trs.senderPublicKey,
 			recipientId: trs.recipientId,
+			btcRecipient: trs.btcRecipient? trs.btcRecipient : null,
 			amount: trs.amount,
 			fee: trs.fee,
 			signature: trs.signature,
@@ -306,6 +317,9 @@ Transaction.prototype.normalize = function (tx, cb) {
 				format: "publicKey"
 			},
 			recipientId: {
+				type: "string"
+			},
+			btcRecipient: {
 				type: "string"
 			},
 			amount: {
