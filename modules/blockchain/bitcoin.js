@@ -1,4 +1,5 @@
 var bitcoin = require('bitcoin');
+var async = require('async');
 
 var private = {}, self = null,
 	library = null, modules = null;
@@ -7,12 +8,12 @@ function Bitcoin(cb, _library) {
 	self = this;
 	library = _library;
 
-	private.client = new bitcoin(library.config.bitcoin.config);
+	private.client = new bitcoin.Client(library.config.bitcoin.config);
 	cb(null, self);
 }
 
 Bitcoin.prototype.getTransaction = function (id, cb) {
-	client.cmd('getrawtransaction', id, 1, cb);
+	private.client.cmd('getrawtransaction', id, 1, cb);
 }
 
 Bitcoin.prototype.getBalanceTransactions = function (from, cb) {
@@ -20,7 +21,7 @@ Bitcoin.prototype.getBalanceTransactions = function (from, cb) {
 		length = 0;
 
 	async.doWhilst(function (next) {
-		client.cmd("listtransactions", library.config.bitcoin.address, 100, from, function (err, transactions) {
+		private.client.cmd("listtransactions", library.config.bitcoin.address, 100, from, function (err, transactions) {
 			if (err) {
 				return setImmediate(next, err);
 			}
