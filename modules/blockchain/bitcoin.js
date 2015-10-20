@@ -20,6 +20,10 @@ Bitcoin.prototype.getBalanceTransactions = function (from, cb) {
 	var btcTransactions = [],
 		length = 0;
 
+	if (!library.config.bitcoin.address){
+		return cb(null, btcTransactions)
+	}
+
 	async.doWhilst(function (next) {
 		private.client.cmd("listtransactions", library.config.bitcoin.address, 100, from, function (err, transactions) {
 			if (err) {
@@ -38,7 +42,7 @@ Bitcoin.prototype.getBalanceTransactions = function (from, cb) {
 				})
 			}
 
-			client.cmd(batch, function (err, transactions) {
+			private.client.cmd(batch, function (err, transactions) {
 				if (err) {
 					return setImmediate(next, err);
 				}

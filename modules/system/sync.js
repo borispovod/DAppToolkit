@@ -310,7 +310,7 @@ private.balanceSync = function (cb) {
 				condition: {
 					type: 1
 				}
-			}, {id: String}, function (err, rows) {
+			}, {count: Number}, function (err, rows) {
 				if (err) {
 					return cb(err);
 				}
