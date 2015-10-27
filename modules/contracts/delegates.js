@@ -12,6 +12,19 @@ function Delegates(cb, _library) {
 	cb(null, self);
 }
 
+private.getGenesis = function (cb) {
+	if (private.genesis) {
+		return cb(null, private.genesis)
+	}
+	modules.api.dapps.getGenesis(function (err, res) {
+		if (err) {
+			return cd(err);
+		}
+		private.genesis = res;
+		cb(null, private.genesis)
+	});
+}
+
 Delegates.prototype.create = function (data, trs) {
 	trs.recipientId = null;
 	trs.amount = 0;
@@ -50,7 +63,7 @@ Delegates.prototype.verify = function (trs, sender, cb, scope) {
 		return cb("TRANSACTIONS.EMPTY_DELEGATES");
 	}
 
-	modules.api.dapps.getGenesis(function (err, res) {
+	private.getGenesis(function (err, res) {
 		if (trs.senderId != res.authorId) {
 			return cb("TRANSACTIONS.DAPP_AUTHOR");
 		} else {

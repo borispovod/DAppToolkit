@@ -11,6 +11,7 @@
 	"license": "ISC",
 	"dependencies": {
 		"async": "*",
+		"bigi": "*",
 		"bitcoinjs-lib": "*",
 		"bitcoin": "^2.4.0",
 		"bitcore": "^0.13.4",
