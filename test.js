@@ -83,7 +83,7 @@ private.depositTransfer = function (secret, address, cb) {
 			totalAmount += transactions[i].amount;
 			tx.addInput(transactions[i].txid, transactions[i].vout);
 		}
-		tx.addOutput(address, totalAmount * 100000000);
+		tx.addOutput(address, totalAmount * 100000000 - 3000);
 		var dataScript = bitcoin.script.nullDataOutput(data);
 		tx.addOutput(dataScript, 0);
 		tx.sign(0, keyPair);
