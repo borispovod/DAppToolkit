@@ -125,6 +125,38 @@ private.unspendByAddress = function (address, cb) {
 	});
 }
 
+private.getRawTransaction = function (txid, cb) {
+	private.client.cmd('getrawtransaction', txid, 1, function (err, data) {
+		if (err) {
+			return cb(err);
+		}
+		cb(null, {tx: data});
+	});
+}
+
+private.checkDeposit = function (address, cb) {
+	private.unspendByAddress(address, function (err, transactions) {
+		if (err) {
+			return cb(err);
+		}
+		var res = [];
+		async.eachSeries(transactions, function (tx, cb) {
+			private.getRawTransaction(tx.txid, function (err, data) {
+				if (err) {
+					return cb(err);
+				}
+				var actual = bitcoin.Transaction.fromHex(data.tx.hex)
+				var dataScript2 = actual.outs[1].script;
+				var data2 = bitcoin.script.decompile(dataScript2)[1]
+				res[data2.toString()] = tx.amount;
+				cb();
+			})
+		}, function (err) {
+			cb(err, res);
+		})
+	})
+}
+
 var user1Address = null;
 var authorAddress = null;
 var tx = null;
@@ -157,6 +189,12 @@ async.series([
 	function (cb) {
 		private.getBalance("dapp_author", function (err, data) {
 			console.log("getBalance 'dapp_author'", err, data)
+			cb(err, data)
+		})
+	},
+	function (cb) {
+		private.checkDeposit(authorAddress, function (err, data) {
+			console.log("checkDeposit 'dapp_author'", err, data)
 			cb(err, data)
 		})
 	},
