@@ -72,9 +72,15 @@ private.getBalance = function (secret, cb) {
 	});
 }
 
-private.depositTransfer = function (secret, address, cb) {
+private.createDepositTransfer = function (secret, address, cb) {
 	var keyPair = private.makePair(secret);
 	private.unspendByAddress(keyPair.getAddress(), function (err, transactions) {
+		if (err) {
+			return cb(err)
+		}
+		if (!transactions.length) {
+			return cb("has no unspend transactions")
+		}
 		var data = new Buffer(keyPair.getAddress() + ":" + 10497276715228427758)
 		var totalAmount = 0;
 
@@ -83,17 +89,27 @@ private.depositTransfer = function (secret, address, cb) {
 			totalAmount += transactions[i].amount;
 			tx.addInput(transactions[i].txid, transactions[i].vout);
 		}
-		tx.addOutput(address, totalAmount * 100000000 - 3000);
+		var normal_fee = 0.0005;
+		var fee = normal_fee / (1 - (tx.tx.byteLength() / 1024) / 500);
+		var amount = totalAmount * 100000000 - Math.ceil(fee * 100000000);
+		tx.addOutput(address, amount);
+
 		var dataScript = bitcoin.script.nullDataOutput(data);
 		tx.addOutput(dataScript, 0);
-		tx.sign(0, keyPair);
+		for (var i = 0; i < transactions.length; i++) {
+			tx.sign(i, keyPair);
+		}
 
-		private.client.cmd('sendrawtransaction', tx.build().toHex(), function (err, data) {
-			if (err) {
-				return cb(err);
-			}
-			cb(null, {from: keyPair.getAddress(), to: address, amount: totalAmount, tx: data});
-		});
+		cb(null, {from: keyPair.getAddress(), to: address, amount: amount, tx: tx.build()});
+	});
+}
+
+private.sendTransaction = function (rawtx, cb) {
+	private.client.cmd('sendrawtransaction', rawtx, function (err, data) {
+		if (err) {
+			return cb(err);
+		}
+		cb(null, {tx: data});
 	});
 }
 
@@ -106,21 +122,6 @@ private.unspendByAddress = function (address, cb) {
 			return tx.address == address;
 		});
 		cb(null, txs);
-	});
-}
-
-private.incomingBtc = function (tx, cb) {
-	var addresses = [];
-
-	private.client.cmd('getrawtransaction', tx, 1, function (err, result) {
-		async.eachSeries(result.vin, function (vin, cb) {
-			private.client.cmd('getrawtransaction', vin.txid, 1, function (err, tx) {
-				addresses.push(tx['vout'][vin['vout']]['scriptPubKey']['addresses'][0]);
-				cb();
-			});
-		}, function (err) {
-			cb(err, addresses);
-		});
 	});
 }
 
@@ -160,8 +161,17 @@ async.series([
 		})
 	},
 	function (cb) {
-		private.depositTransfer("user1", user1Address, function (err, data) {
-			console.log(err, data)
+		private.createDepositTransfer("user1", authorAddress, function (err, data) {
+			console.log("createDepositTransfer", err, data)
+			if (!err) {
+				tx = data.tx;
+			}
+			cb(err, data)
+		})
+	},
+	function (cb) {
+		private.sendTransaction(tx.toHex(), function (err, data) {
+			console.log("sendTransaction", err, data)
 			cb(err, data)
 		})
 	}
